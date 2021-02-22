@@ -27,7 +27,7 @@ namespace Microsoft.Xna.Framework.Media
                 SourceResolver resolver = new SourceResolver();
 
                 ObjectType otype;
-                ComObject source = resolver.CreateObjectFromURL(FileName, SourceResolverFlags.MediaSource, null, out otype);
+                ComObject source = (ComObject)resolver.CreateObjectFromURL(FileName, SourceResolverFlags.MediaSource, null, out otype);
                 mediaSource = source.QueryInterface<SharpDX.MediaFoundation.MediaSource>();
                 resolver.Dispose();
                 source.Dispose();
@@ -68,7 +68,9 @@ namespace Microsoft.Xna.Framework.Media
                         // Specify that we want the data to come in as RGB32.
                         _mediaType.Set(MediaTypeAttributeKeys.Subtype, new Guid("00000016-0000-0010-8000-00AA00389B71"));
 
-                        MediaFactory.CreateSampleGrabberSinkActivate(_mediaType, SampleGrabber, out activate);
+                        throw new NotImplementedException();
+                        //MediaFactory.CreateSampleGrabberSinkActivate(_mediaType, SampleGrabber, out activate);
+
                         outputNode.Object = activate;
                     }
 

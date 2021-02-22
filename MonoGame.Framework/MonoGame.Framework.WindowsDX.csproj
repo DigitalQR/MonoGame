@@ -74,13 +74,15 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
-    <PackageReference Version="4.0.1" Include="SharpDX" />
-    <PackageReference Version="4.0.1" Include="SharpDX.Direct2D1" />
-    <PackageReference Version="4.0.1" Include="SharpDX.Direct3D11" />
-    <PackageReference Version="4.0.1" Include="SharpDX.DXGI" />
-    <PackageReference Version="4.0.1" Include="SharpDX.MediaFoundation" />
-    <PackageReference Version="4.0.1" Include="SharpDX.XAudio2" />
-    <PackageReference Version="4.0.1" Include="SharpDX.XInput" />
+    <PackageReference Version="4.2.0" Include="SharpDX" />
+    <PackageReference Version="4.2.0" Include="SharpDX.Direct2D1" />
+    <PackageReference Version="4.2.0" Include="SharpDX.Direct3D11" />
+    <PackageReference Version="4.2.0" Include="SharpDX.DXGI" />
+    <PackageReference Version="4.2.0" Include="SharpDX.MediaFoundation" />
+    <PackageReference Version="4.2.0" Include="SharpDX.XAudio2" />
+    <PackageReference Version="4.2.0" Include="SharpDX.XInput" />
+    <PackageReference Include="StbImageSharp" Version="2.22.5" />
+    <PackageReference Include="StbImageWriteSharp" Version="1.13.5" />
   </ItemGroup>
 
   <ItemGroup Condition=" '$(TargetFramework)' == 'net452' ">

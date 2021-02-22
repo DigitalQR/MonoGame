@@ -46,6 +46,21 @@ namespace Microsoft.Xna.Framework.Media
                 _session.BeginGetEvent(this, null);
             }
 
+            public Result QueryInterface(ref Guid guid, out IntPtr comObject)
+            {
+                throw new NotImplementedException();
+            }
+
+            public int AddReference()
+            {
+                throw new NotImplementedException();
+            }
+
+            public int Release()
+            {
+                throw new NotImplementedException();
+            }
+
             public AsyncCallbackFlags Flags { get; private set; }
             public WorkQueueId WorkQueueId { get; private set; }
         }

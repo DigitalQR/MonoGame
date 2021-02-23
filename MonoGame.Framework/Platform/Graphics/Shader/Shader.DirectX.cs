@@ -7,10 +7,13 @@ using SharpDX.Direct3D11;
 
 namespace Microsoft.Xna.Framework.Graphics
 {
-    internal partial class Shader
+    public partial class Shader
     {
         private VertexShader _vertexShader;
         private PixelShader _pixelShader;
+        private ComputeShader _computeShader;
+        private GeometryShader _geometryShader;
+        private DomainShader _domainShader;
         private byte[] _shaderBytecode;
 
         // Caches the DirectX input layouts for this vertex shader.
@@ -46,6 +49,36 @@ namespace Microsoft.Xna.Framework.Graphics
             }
         }
 
+        internal ComputeShader ComputeShader
+        {
+            get
+            {
+                if (_computeShader == null)
+                    CreateComputeShader();
+                return _computeShader;
+            }
+        }
+
+        internal GeometryShader GeometryShader
+        {
+            get
+            {
+                if (_geometryShader == null)
+                    CreateGeometryShader();
+                return _geometryShader;
+            }
+        }
+
+        internal DomainShader DomainShader
+        {
+            get
+            {
+                if (_domainShader == null)
+                    CreateDomainShader();
+                return _domainShader;
+            }
+        }
+
         private static int PlatformProfile()
         {
             return 1;
@@ -58,17 +91,42 @@ namespace Microsoft.Xna.Framework.Graphics
             _shaderBytecode = shaderBytecode;
 
             HashKey = MonoGame.Framework.Utilities.Hash.ComputeHash(Bytecode);
-            
-            if (stage == ShaderStage.Vertex)
-                CreateVertexShader();
-            else
-                CreatePixelShader();
+
+            switch(stage)
+            {
+                case ShaderStage.Vertex:
+                    CreateVertexShader();
+                    break;
+
+                case ShaderStage.Pixel:
+                    CreatePixelShader();
+                    break;
+
+                case ShaderStage.Compute:
+                    CreateComputeShader();
+                    break;
+
+                case ShaderStage.Geometry:
+                    CreateGeometryShader();
+                    break;
+
+                case ShaderStage.Domain:
+                    CreateDomainShader();
+                    break;
+
+                default:
+                    System.Diagnostics.Debug.Assert(false, "Unsupported ShaderStage");
+                    break;
+            }
         }
 
         private void PlatformGraphicsDeviceResetting()
         {
             SharpDX.Utilities.Dispose(ref _vertexShader);
             SharpDX.Utilities.Dispose(ref _pixelShader);
+            SharpDX.Utilities.Dispose(ref _computeShader);
+            SharpDX.Utilities.Dispose(ref _geometryShader);
+            SharpDX.Utilities.Dispose(ref _domainShader);
             SharpDX.Utilities.Dispose(ref _inputLayouts);
         }
 
@@ -79,6 +137,9 @@ namespace Microsoft.Xna.Framework.Graphics
                 SharpDX.Utilities.Dispose(ref _vertexShader);
                 SharpDX.Utilities.Dispose(ref _pixelShader);
                 SharpDX.Utilities.Dispose(ref _inputLayouts);
+                SharpDX.Utilities.Dispose(ref _computeShader);
+                SharpDX.Utilities.Dispose(ref _geometryShader);
+                SharpDX.Utilities.Dispose(ref _domainShader);
             }
 
             base.Dispose(disposing);
@@ -95,6 +156,24 @@ namespace Microsoft.Xna.Framework.Graphics
             System.Diagnostics.Debug.Assert(Stage == ShaderStage.Vertex);
             _vertexShader = new VertexShader(GraphicsDevice._d3dDevice, _shaderBytecode, null);
             _inputLayouts = new InputLayoutCache(GraphicsDevice, Bytecode);
+        }
+
+        private void CreateComputeShader()
+        {
+            System.Diagnostics.Debug.Assert(Stage == ShaderStage.Compute);
+            _computeShader = new ComputeShader(GraphicsDevice._d3dDevice, _shaderBytecode, null);
+        }
+
+        private void CreateGeometryShader()
+        {
+            System.Diagnostics.Debug.Assert(Stage == ShaderStage.Geometry);
+            _geometryShader = new GeometryShader(GraphicsDevice._d3dDevice, _shaderBytecode, null);
+        }
+
+        private void CreateDomainShader()
+        {
+            System.Diagnostics.Debug.Assert(Stage == ShaderStage.Domain);
+            _domainShader = new DomainShader(GraphicsDevice._d3dDevice, _shaderBytecode, null);
         }
     }
 }

@@ -42,12 +42,29 @@ namespace Microsoft.Xna.Framework.Graphics
                 d3dContext.UpdateSubresource(_buffer, _cbuffer);
                 _dirty = false;
             }
-            
+
             // Set the buffer to the right stage.
-            if (stage == ShaderStage.Vertex)
-                d3dContext.VertexShader.SetConstantBuffer(slot, _cbuffer);
-            else
-                d3dContext.PixelShader.SetConstantBuffer(slot, _cbuffer);
+            switch (stage)
+            {
+                case ShaderStage.Vertex:
+                    d3dContext.VertexShader.SetConstantBuffer(slot, _cbuffer);
+                    break;
+                case ShaderStage.Pixel:
+                    d3dContext.PixelShader.SetConstantBuffer(slot, _cbuffer);
+                    break;
+                case ShaderStage.Compute:
+                    d3dContext.ComputeShader.SetConstantBuffer(slot, _cbuffer);
+                    break;
+                case ShaderStage.Geometry:
+                    d3dContext.GeometryShader.SetConstantBuffer(slot, _cbuffer);
+                    break;
+                case ShaderStage.Domain:
+                    d3dContext.DomainShader.SetConstantBuffer(slot, _cbuffer);
+                    break;
+                default:
+                    System.Diagnostics.Debug.Assert(false, "Unsupported ShaderStage");
+                    break;
+            }
         }
 
         protected override void Dispose(bool disposing)

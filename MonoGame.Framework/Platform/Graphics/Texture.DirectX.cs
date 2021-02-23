@@ -11,7 +11,8 @@ namespace Microsoft.Xna.Framework.Graphics
     {
         private Resource _texture;
 
-        private ShaderResourceView _resourceView;
+        private ShaderResourceView _shaderResourceView;
+        private UnorderedAccessView _unorderedAccessView;
 
         /// <summary>
         /// Gets the handle to a shared resource.
@@ -38,15 +39,24 @@ namespace Microsoft.Xna.Framework.Graphics
 
         internal ShaderResourceView GetShaderResourceView()
         {
-            if (_resourceView == null)
-                _resourceView = new ShaderResourceView(GraphicsDevice._d3dDevice, GetTexture());
+            if (_shaderResourceView == null)
+                _shaderResourceView = new ShaderResourceView(GraphicsDevice._d3dDevice, GetTexture());
 
-            return _resourceView;
+            return _shaderResourceView;
+        }
+
+        internal UnorderedAccessView GetUnorderedResourceView()
+        {
+            if (_unorderedAccessView == null)
+                _unorderedAccessView = new UnorderedAccessView(GraphicsDevice._d3dDevice, GetTexture());
+
+            return _unorderedAccessView;
         }
 
         private void PlatformGraphicsDeviceResetting()
         {
-            SharpDX.Utilities.Dispose(ref _resourceView);
+            SharpDX.Utilities.Dispose(ref _shaderResourceView);
+            SharpDX.Utilities.Dispose(ref _unorderedAccessView);
             SharpDX.Utilities.Dispose(ref _texture);
         }
 
@@ -54,7 +64,8 @@ namespace Microsoft.Xna.Framework.Graphics
         {
             if (disposing)
             {
-                SharpDX.Utilities.Dispose(ref _resourceView);
+                SharpDX.Utilities.Dispose(ref _shaderResourceView);
+                SharpDX.Utilities.Dispose(ref _unorderedAccessView);
                 SharpDX.Utilities.Dispose(ref _texture);
             }
 

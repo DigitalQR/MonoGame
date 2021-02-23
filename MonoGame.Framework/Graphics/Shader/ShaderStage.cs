@@ -1,8 +1,11 @@
 ﻿namespace Microsoft.Xna.Framework.Graphics
 {
-    internal enum ShaderStage
+    public enum ShaderStage
     {
         Vertex,
         Pixel,
+        Compute,
+        Geometry,
+        Domain
     }
 }

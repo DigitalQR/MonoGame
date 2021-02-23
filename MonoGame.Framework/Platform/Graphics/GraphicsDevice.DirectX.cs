@@ -61,7 +61,7 @@ namespace Microsoft.Xna.Framework.Graphics
 #endif
 
         // The active render targets.
-        readonly SharpDX.Direct3D11.RenderTargetView[] _currentRenderTargets = new SharpDX.Direct3D11.RenderTargetView[4];
+        readonly SharpDX.Direct3D11.RenderTargetView[] _currentRenderTargets = new SharpDX.Direct3D11.RenderTargetView[8];
 
         // The active depth view.
         SharpDX.Direct3D11.DepthStencilView _currentDepthStencilView;
@@ -104,8 +104,8 @@ namespace Microsoft.Xna.Framework.Graphics
 
         private void PlatformSetup()
         {
-            MaxTextureSlots = 16;
-            MaxVertexTextureSlots = 16;
+            MaxTextureSlots = 128;
+            MaxSamplerSlots = 16;
 
 #if WINDOWS_UAP
 			CreateDeviceIndependentResources();
@@ -1171,8 +1171,8 @@ namespace Microsoft.Xna.Framework.Graphics
             // to the device as a texture resource.
             lock (_d3dContext)
             {
-                VertexTextures.ClearTargets(this, _currentRenderTargetBindings);
                 Textures.ClearTargets(this, _currentRenderTargetBindings);
+                ComputeRWTextures.ClearTargets(this, _currentRenderTargetBindings);
             }
 
             for (var i = 0; i < _currentRenderTargetCount; i++)
@@ -1327,14 +1327,17 @@ namespace Microsoft.Xna.Framework.Graphics
                 }
             }
 
-            if (_vertexShader == null)
-                throw new InvalidOperationException("A vertex shader must be set!");
-            if (_pixelShader == null)
-                throw new InvalidOperationException("A pixel shader must be set!");
+            bool validForGeom = (_vertexShader != null && _pixelShader != null);
+            bool validForCompute = (_computeShader != null);
+
+            if (!validForGeom && !validForCompute)
+            {
+                throw new InvalidOperationException("A vertex+pixel or a compute shader must be set!");
+            }
 
             if (_vertexShaderDirty)
             {
-                _d3dContext.VertexShader.Set(_vertexShader.VertexShader);
+                _d3dContext.VertexShader.Set(_vertexShader != null ? _vertexShader.VertexShader : null);
 
                 unchecked
                 {
@@ -1349,7 +1352,7 @@ namespace Microsoft.Xna.Framework.Graphics
 
             if (_pixelShaderDirty)
             {
-                _d3dContext.PixelShader.Set(_pixelShader.PixelShader);
+                _d3dContext.PixelShader.Set(_pixelShader != null ? _pixelShader.PixelShader : null);
                 _pixelShaderDirty = false;
 
                 unchecked
@@ -1358,12 +1361,47 @@ namespace Microsoft.Xna.Framework.Graphics
                 }
             }
 
+            if (_computeShaderDirty)
+            {
+                _d3dContext.ComputeShader.Set(_computeShader != null ? _computeShader.ComputeShader : null);
+                _computeShaderDirty = false;
+
+                unchecked
+                {
+                    _graphicsMetrics._computeShaderCount++;
+                }
+            }
+
+            if (_geometryShaderDirty)
+            {
+                _d3dContext.GeometryShader.Set(_geometryShader != null ? _geometryShader.GeometryShader : null);
+                _geometryShaderDirty = false;
+
+                unchecked
+                {
+                    _graphicsMetrics._geometryShaderCount++;
+                }
+            }
+
+            if (_domainShaderDirty)
+            {
+                _d3dContext.DomainShader.Set(_domainShader != null ? _domainShader.DomainShader : null);
+                _domainShaderDirty = false;
+
+                unchecked
+                {
+                    _graphicsMetrics._domainShaderCount++;
+                }
+            }
+
             _vertexConstantBuffers.SetConstantBuffers(this);
             _pixelConstantBuffers.SetConstantBuffers(this);
+            _computeConstantBuffers.SetConstantBuffers(this);
+            _geometryConstantBuffers.SetConstantBuffers(this);
+            _domainConstantBuffers.SetConstantBuffers(this);
 
-            VertexTextures.SetTextures(this);
-            VertexSamplerStates.PlatformSetSamplers(this);
             Textures.SetTextures(this);
+            ComputeRWTextures.SetTextures(this);
             SamplerStates.PlatformSetSamplers(this);
         }
 
@@ -1532,6 +1570,15 @@ namespace Microsoft.Xna.Framework.Graphics
                 _d3dContext.InputAssembler.PrimitiveTopology = ToPrimitiveTopology(primitiveType);
                 int indexCount = GetElementCountArray(primitiveType, primitiveCount);
                 _d3dContext.DrawIndexedInstanced(indexCount, instanceCount, startIndex, baseVertex, baseInstance);
+            }
+        }
+
+        private void PlatformDispatch(int threadGroupCountX, int threadGroupCountY, int threadGroupCountZ)
+        {
+            lock (_d3dContext)
+            {
+                ApplyState(true);
+                _d3dContext.Dispatch(threadGroupCountX, threadGroupCountY, threadGroupCountZ);
             }
         }
 

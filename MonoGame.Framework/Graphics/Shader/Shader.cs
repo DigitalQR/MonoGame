@@ -39,7 +39,7 @@ namespace Microsoft.Xna.Framework.Graphics
         public int location;
     }
 
-    internal partial class Shader : GraphicsResource
+    public partial class Shader : GraphicsResource
 	{
         /// <summary>
         /// Returns the platform specific shader profile identifier.
@@ -49,20 +49,19 @@ namespace Microsoft.Xna.Framework.Graphics
         /// <summary>
         /// A hash value which can be used to compare shaders.
         /// </summary>
-        internal int HashKey { get; private set; }
+        public int HashKey { get; private set; }
 
-        public SamplerInfo[] Samplers { get; private set; }
+        internal SamplerInfo[] Samplers { get; private set; }
 
 	    public int[] CBuffers { get; private set; }
 
         public ShaderStage Stage { get; private set; }
 
-        public VertexAttribute[] Attributes { get; private set; }
+        internal VertexAttribute[] Attributes { get; private set; }
 
         internal Shader(GraphicsDevice device, BinaryReader reader)
         {
             GraphicsDevice = device;
-
             var isVertexShader = reader.ReadBoolean();
             Stage = isVertexShader ? ShaderStage.Vertex : ShaderStage.Pixel;
 
@@ -77,22 +76,22 @@ namespace Microsoft.Xna.Framework.Graphics
                 Samplers[s].textureSlot = reader.ReadByte();
                 Samplers[s].samplerSlot = reader.ReadByte();
 
-				if (reader.ReadBoolean())
-				{
-					Samplers[s].state = new SamplerState();
-					Samplers[s].state.AddressU = (TextureAddressMode)reader.ReadByte();
-					Samplers[s].state.AddressV = (TextureAddressMode)reader.ReadByte();
-					Samplers[s].state.AddressW = (TextureAddressMode)reader.ReadByte();
+                if (reader.ReadBoolean())
+                {
+                    Samplers[s].state = new SamplerState();
+                    Samplers[s].state.AddressU = (TextureAddressMode)reader.ReadByte();
+                    Samplers[s].state.AddressV = (TextureAddressMode)reader.ReadByte();
+                    Samplers[s].state.AddressW = (TextureAddressMode)reader.ReadByte();
                     Samplers[s].state.BorderColor = new Color(
-                        reader.ReadByte(), 
-                        reader.ReadByte(), 
-                        reader.ReadByte(), 
+                        reader.ReadByte(),
+                        reader.ReadByte(),
+                        reader.ReadByte(),
                         reader.ReadByte());
-					Samplers[s].state.Filter = (TextureFilter)reader.ReadByte();
-					Samplers[s].state.MaxAnisotropy = reader.ReadInt32();
-					Samplers[s].state.MaxMipLevel = reader.ReadInt32();
-					Samplers[s].state.MipMapLevelOfDetailBias = reader.ReadSingle();
-				}
+                    Samplers[s].state.Filter = (TextureFilter)reader.ReadByte();
+                    Samplers[s].state.MaxAnisotropy = reader.ReadInt32();
+                    Samplers[s].state.MaxMipLevel = reader.ReadInt32();
+                    Samplers[s].state.MipMapLevelOfDetailBias = reader.ReadSingle();
+                }
 
                 Samplers[s].name = reader.ReadString();
                 Samplers[s].parameter = reader.ReadByte();
@@ -114,6 +113,19 @@ namespace Microsoft.Xna.Framework.Graphics
             }
 
             PlatformConstruct(Stage, shaderBytecode);
+        }
+
+        public Shader(GraphicsDevice device, ShaderStage stage, byte[] bytecode)
+        {
+            GraphicsDevice = device;
+
+            // Bare bones shader
+            Samplers = null;
+            CBuffers = null;
+            Attributes = null;
+
+            Stage = stage;
+            PlatformConstruct(Stage, bytecode);
         }
 
         internal protected override void GraphicsDeviceResetting()

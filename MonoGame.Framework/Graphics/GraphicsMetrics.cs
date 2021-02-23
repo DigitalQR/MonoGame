@@ -11,12 +11,16 @@ namespace Microsoft.Xna.Framework.Graphics
     {
         internal long _clearCount;
         internal long _drawCount;
+        internal long _dispatchCount;
         internal long _pixelShaderCount;
         internal long _primitiveCount;
         internal long _spriteCount;
         internal long _targetCount;
         internal long _textureCount;
         internal long _vertexShaderCount;
+        internal long _computeShaderCount;
+        internal long _geometryShaderCount;
+        internal long _domainShaderCount;
 
         /// <summary>
         /// Number of times Clear was called.
@@ -27,6 +31,11 @@ namespace Microsoft.Xna.Framework.Graphics
         /// Number of times Draw was called.
         /// </summary>
         public long DrawCount { get { return _drawCount; } }
+
+        /// <summary>
+        /// Number of times Dispatch was called.
+        /// </summary>
+        public long DispatchCount { get { return _dispatchCount; } }
 
         /// <summary>
         /// Number of times the pixel shader was changed on the GPU.
@@ -59,6 +68,21 @@ namespace Microsoft.Xna.Framework.Graphics
         public long VertexShaderCount { get { return _vertexShaderCount; } }
 
         /// <summary>
+        /// Number of times the computer shader was changed on the GPU.
+        /// </summary>
+        public long ComputeShaderCount { get { return _computeShaderCount; } }
+
+        /// <summary>
+        /// Number of times the geometry shader was changed on the GPU.
+        /// </summary>
+        public long GeometryShaderCount { get { return _geometryShaderCount; } }
+
+        /// <summary>
+        /// Number of times the domain shader was changed on the GPU.
+        /// </summary>
+        public long DomainShaderCount { get { return _domainShaderCount; } }
+
+        /// <summary>
         /// Returns the difference between two sets of metrics.
         /// </summary>
         /// <param name="value1">Source <see cref="GraphicsMetrics"/> on the left of the sub sign.</param>
@@ -70,12 +94,16 @@ namespace Microsoft.Xna.Framework.Graphics
             {
                 _clearCount = value1._clearCount - value2._clearCount,
                 _drawCount = value1._drawCount - value2._drawCount,
+                _dispatchCount = value1._dispatchCount - value2._dispatchCount,
                 _pixelShaderCount = value1._pixelShaderCount - value2._pixelShaderCount,
                 _primitiveCount = value1._primitiveCount - value2._primitiveCount,
                 _spriteCount = value1._spriteCount - value2._spriteCount,
                 _targetCount = value1._targetCount - value2._targetCount,
                 _textureCount = value1._textureCount - value2._textureCount,
-                _vertexShaderCount = value1._vertexShaderCount - value2._vertexShaderCount
+                _vertexShaderCount = value1._vertexShaderCount - value2._vertexShaderCount,
+                _computeShaderCount = value1._computeShaderCount - value2._computeShaderCount,
+                _geometryShaderCount = value1._geometryShaderCount - value2._geometryShaderCount,
+                _domainShaderCount = value1._domainShaderCount - value2._domainShaderCount
             };
         }
 
@@ -91,12 +119,16 @@ namespace Microsoft.Xna.Framework.Graphics
             {
                 _clearCount =  value1._clearCount + value2._clearCount,
                 _drawCount = value1._drawCount + value2._drawCount,
+                _dispatchCount = value1._dispatchCount + value2._dispatchCount,
                 _pixelShaderCount = value1._pixelShaderCount + value2._pixelShaderCount,
                 _primitiveCount = value1._primitiveCount + value2._primitiveCount,
                 _spriteCount = value1._spriteCount + value2._spriteCount,
                 _targetCount = value1._targetCount + value2._targetCount,
                 _textureCount = value1._textureCount + value2._textureCount,
-                _vertexShaderCount = value1._vertexShaderCount + value2._vertexShaderCount
+                _vertexShaderCount = value1._vertexShaderCount + value2._vertexShaderCount,
+                _computeShaderCount = value1._computeShaderCount + value2._computeShaderCount,
+                _geometryShaderCount = value1._geometryShaderCount + value2._geometryShaderCount,
+                _domainShaderCount = value1._domainShaderCount + value2._domainShaderCount
             };
         }
     }

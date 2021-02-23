@@ -8,6 +8,8 @@ namespace Microsoft.Xna.Framework.Graphics
 
 		private readonly Shader _pixelShader;
         private readonly Shader _vertexShader;
+        private readonly Shader _geometryShader;
+        private readonly Shader _domainShader;
 
         private readonly BlendState _blendState;
         private readonly DepthStencilState _depthStencilState;
@@ -20,7 +22,9 @@ namespace Microsoft.Xna.Framework.Graphics
         internal EffectPass(    Effect effect, 
                                 string name,
                                 Shader vertexShader, 
-                                Shader pixelShader, 
+                                Shader pixelShader,
+                                Shader geometryShader,
+                                Shader domainShader,
                                 BlendState blendState, 
                                 DepthStencilState depthStencilState, 
                                 RasterizerState rasterizerState,
@@ -35,6 +39,8 @@ namespace Microsoft.Xna.Framework.Graphics
 
             _vertexShader = vertexShader;
             _pixelShader = pixelShader;
+            _geometryShader = geometryShader;
+            _domainShader = domainShader;
 
             _blendState = blendState;
             _depthStencilState = depthStencilState;
@@ -58,6 +64,8 @@ namespace Microsoft.Xna.Framework.Graphics
             Annotations = cloneSource.Annotations;
             _vertexShader = cloneSource._vertexShader;
             _pixelShader = cloneSource._pixelShader;
+            _geometryShader = cloneSource._geometryShader;
+            _domainShader = cloneSource._domainShader;
         }
 
         public void Apply()
@@ -79,7 +87,7 @@ namespace Microsoft.Xna.Framework.Graphics
                 device.VertexShader = _vertexShader;
 
 				// Update the texture parameters.
-                SetShaderSamplers(_vertexShader, device.VertexTextures, device.VertexSamplerStates);
+                SetShaderSamplers(_vertexShader, device.Textures, device.SamplerStates);
 
                 // Update the constant buffers.
                 for (var c = 0; c < _vertexShader.CBuffers.Length; c++)
@@ -106,6 +114,38 @@ namespace Microsoft.Xna.Framework.Graphics
                 }
             }
 
+            if (_geometryShader != null)
+            {
+                device.GeometryShader = _geometryShader;
+
+                // Update the texture parameters.
+                SetShaderSamplers(_geometryShader, device.Textures, device.SamplerStates);
+
+                // Update the constant buffers.
+                for (var c = 0; c < _geometryShader.CBuffers.Length; c++)
+                {
+                    var cb = _effect.ConstantBuffers[_geometryShader.CBuffers[c]];
+                    cb.Update(_effect.Parameters);
+                    device.SetConstantBuffer(ShaderStage.Geometry, c, cb);
+                }
+            }
+
+            if (_domainShader != null)
+            {
+                device.DomainShader = _domainShader;
+
+                // Update the texture parameters.
+                SetShaderSamplers(_domainShader, device.Textures, device.SamplerStates);
+
+                // Update the constant buffers.
+                for (var c = 0; c < _domainShader.CBuffers.Length; c++)
+                {
+                    var cb = _effect.ConstantBuffers[_domainShader.CBuffers[c]];
+                    cb.Update(_effect.Parameters);
+                    device.SetConstantBuffer(ShaderStage.Domain, c, cb);
+                }
+            }
+
             // Set the render states if we have some.
             if (_rasterizerState != null)
                 device.RasterizerState = _rasterizerState;
@@ -126,7 +166,10 @@ namespace Microsoft.Xna.Framework.Graphics
 
                 // If there is a sampler state set it.
                 if (sampler.state != null)
+                {
+                    Debug.Assert(samplerStates[sampler.samplerSlot] == null);
                     samplerStates[sampler.samplerSlot] = sampler.state;
+                }
             }
         }
     }

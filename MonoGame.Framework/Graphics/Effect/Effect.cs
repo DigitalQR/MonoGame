@@ -371,7 +371,7 @@ namespace Microsoft.Xna.Framework.Graphics
 					};
 				}
 
-                passes[i] = new EffectPass(effect, name, vertexShader, pixelShader, blend, depth, raster, annotations);
+                passes[i] = new EffectPass(effect, name, vertexShader, pixelShader, null, null, blend, depth, raster, annotations);
 			}
 
             return new EffectPassCollection(passes);

@@ -80,17 +80,15 @@ namespace Microsoft.Xna.Framework.Graphics
         private IndexBuffer _indexBuffer;
         private bool _indexBufferDirty;
 
-        private readonly RenderTargetBinding[] _currentRenderTargetBindings = new RenderTargetBinding[4];
+        private readonly RenderTargetBinding[] _currentRenderTargetBindings = new RenderTargetBinding[8];
         private int _currentRenderTargetCount;
         private readonly RenderTargetBinding[] _tempRenderTargetBinding = new RenderTargetBinding[1];
 
         internal GraphicsCapabilities GraphicsCapabilities { get; private set; }
 
-        public TextureCollection VertexTextures { get; private set; }
-
-        public SamplerStateCollection VertexSamplerStates { get; private set; }
-
         public TextureCollection Textures { get; private set; }
+
+        public TextureCollection ComputeRWTextures { get; private set; }
 
         public SamplerStateCollection SamplerStates { get; private set; }
 
@@ -122,8 +120,41 @@ namespace Microsoft.Xna.Framework.Graphics
             get { return _pixelShaderDirty; }
         }
 
+        /// <summary>
+        /// The active compute shader.
+        /// </summary>
+        private Shader _computeShader;
+        private bool _computeShaderDirty;
+        private bool ComputeShaderDirty
+        {
+            get { return _computeShaderDirty; }
+        }
+
+        /// <summary>
+        /// The active geometry shader.
+        /// </summary>
+        private Shader _geometryShader;
+        private bool _geometryShaderDirty;
+        private bool GeometryShaderDirty
+        {
+            get { return _geometryShaderDirty; }
+        }
+
+        /// <summary>
+        /// The active domain shader.
+        /// </summary>
+        private Shader _domainShader;
+        private bool _domainShaderDirty;
+        private bool DomainShaderDirty
+        {
+            get { return _domainShaderDirty; }
+        }
+
         private readonly ConstantBufferCollection _vertexConstantBuffers = new ConstantBufferCollection(ShaderStage.Vertex, 16);
         private readonly ConstantBufferCollection _pixelConstantBuffers = new ConstantBufferCollection(ShaderStage.Pixel, 16);
+        private readonly ConstantBufferCollection _computeConstantBuffers = new ConstantBufferCollection(ShaderStage.Compute, 16);
+        private readonly ConstantBufferCollection _geometryConstantBuffers = new ConstantBufferCollection(ShaderStage.Geometry, 16);
+        private readonly ConstantBufferCollection _domainConstantBuffers = new ConstantBufferCollection(ShaderStage.Domain, 16);
 
         /// <summary>
         /// The cache of effects from unique byte streams.
@@ -150,7 +181,7 @@ namespace Microsoft.Xna.Framework.Graphics
 
         private int _maxVertexBufferSlots;
         internal int MaxTextureSlots;
-        internal int MaxVertexTextureSlots;
+        internal int MaxSamplerSlots;
 
         public bool IsDisposed
         {
@@ -296,11 +327,9 @@ namespace Microsoft.Xna.Framework.Graphics
 
             PlatformSetup();
 
-            VertexTextures = new TextureCollection(this, MaxVertexTextureSlots, true);
-            VertexSamplerStates = new SamplerStateCollection(this, MaxVertexTextureSlots, true);
-
             Textures = new TextureCollection(this, MaxTextureSlots, false);
-            SamplerStates = new SamplerStateCollection(this, MaxTextureSlots, false);
+            ComputeRWTextures = new TextureCollection(this, MaxTextureSlots, true);
+            SamplerStates = new SamplerStateCollection(this, MaxSamplerSlots);
 
             _blendStateAdditive = BlendState.Additive.Clone();
             _blendStateAlphaBlend = BlendState.AlphaBlend.Clone();
@@ -364,14 +393,16 @@ namespace Microsoft.Xna.Framework.Graphics
 
             // Clear the texture and sampler collections forcing
             // the state to be reapplied.
-            VertexTextures.Clear();
-            VertexSamplerStates.Clear();
             Textures.Clear();
+            ComputeRWTextures.Clear();
             SamplerStates.Clear();
 
             // Clear constant buffers
             _vertexConstantBuffers.Clear();
             _pixelConstantBuffers.Clear();
+            _computeConstantBuffers.Clear();
+            _geometryConstantBuffers.Clear();
+            _domainConstantBuffers.Clear();
 
             // Force set the buffers and shaders on next ApplyState() call
             _vertexBuffers = new VertexBufferBindings(_maxVertexBufferSlots);
@@ -379,6 +410,9 @@ namespace Microsoft.Xna.Framework.Graphics
             _indexBufferDirty = true;
             _vertexShaderDirty = true;
             _pixelShaderDirty = true;
+            _computeShaderDirty = true;
+            _geometryShaderDirty = true;
+            _domainShaderDirty = true;
 
             // Set the default scissor rect.
             _scissorRectangleDirty = true;
@@ -971,7 +1005,7 @@ namespace Microsoft.Xna.Framework.Graphics
 
         public IndexBuffer Indices { set { SetIndexBuffer(value); } get { return _indexBuffer; } }
 
-        internal Shader VertexShader
+        public Shader VertexShader
         {
             get { return _vertexShader; }
 
@@ -986,7 +1020,7 @@ namespace Microsoft.Xna.Framework.Graphics
             }
         }
 
-        internal Shader PixelShader
+        public Shader PixelShader
         {
             get { return _pixelShader; }
 
@@ -1001,12 +1035,74 @@ namespace Microsoft.Xna.Framework.Graphics
             }
         }
 
+        public Shader ComputeShader
+        {
+            get { return _computeShader; }
+
+            set
+            {
+                if (_computeShader == value)
+                    return;
+
+                _computeShader = value;
+                _computeConstantBuffers.Clear();
+                _computeShaderDirty = true;
+            }
+        }
+
+        public Shader GeometryShader
+        {
+            get { return _geometryShader; }
+
+            set
+            {
+                if (_geometryShader == value)
+                    return;
+
+                _geometryShader = value;
+                _geometryConstantBuffers.Clear();
+                _geometryShaderDirty = true;
+            }
+        }
+
+        public Shader DomainShader
+        {
+            get { return _domainShader; }
+
+            set
+            {
+                if (_domainShader == value)
+                    return;
+
+                _domainShader = value;
+                _domainConstantBuffers.Clear();
+                _domainShaderDirty = true;
+            }
+        }
+
         internal void SetConstantBuffer(ShaderStage stage, int slot, ConstantBuffer buffer)
         {
-            if (stage == ShaderStage.Vertex)
-                _vertexConstantBuffers[slot] = buffer;
-            else
-                _pixelConstantBuffers[slot] = buffer;
+            switch (stage)
+            {
+                case ShaderStage.Vertex:
+                    _vertexConstantBuffers[slot] = buffer;
+                    break;
+                case ShaderStage.Pixel:
+                    _pixelConstantBuffers[slot] = buffer;
+                    break;
+                case ShaderStage.Compute:
+                    _computeConstantBuffers[slot] = buffer;
+                    break;
+                case ShaderStage.Geometry:
+                    _geometryConstantBuffers[slot] = buffer;
+                    break;
+                case ShaderStage.Domain:
+                    _domainConstantBuffers[slot] = buffer;
+                    break;
+                default:
+                    System.Diagnostics.Debug.Assert(false, "Unsupported ShaderStage");
+                    break;
+            }
         }
 
         public bool ResourcesLost { get; set; }
@@ -1362,6 +1458,25 @@ namespace Microsoft.Xna.Framework.Graphics
             {
                 _graphicsMetrics._drawCount++;
                 _graphicsMetrics._primitiveCount += (primitiveCount * instanceCount);
+            }
+        }
+
+        /// <summary>
+        /// Dispatch compute thread group.
+        /// </summary>
+        /// <param name="threadGroupCountX">The number of groups dispatched in the x direction. Must be less than or equal to DispatchMaximumThreadGroupsPerDimension (65535)</param>
+        /// <param name="threadGroupCountY">The number of groups dispatched in the y direction. Must be less than or equal to DispatchMaximumThreadGroupsPerDimension (65535)</param>
+        /// <param name="threadGroupCountZ">The number of groups dispatched in the z direction. Must be less than or equal to DispatchMaximumThreadGroupsPerDimension (65535)</param>
+        public void Dispatch(int threadGroupCountX, int threadGroupCountY, int threadGroupCountZ)
+        {
+            if (_computeShader == null)
+                throw new InvalidOperationException("Compute shader must be set before calling Dispatch.");
+
+            PlatformDispatch(threadGroupCountX, threadGroupCountY, threadGroupCountZ);
+
+            unchecked
+            {
+                _graphicsMetrics._dispatchCount++;
             }
         }
 

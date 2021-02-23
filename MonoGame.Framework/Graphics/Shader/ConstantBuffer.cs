@@ -6,7 +6,7 @@ using System;
 
 namespace Microsoft.Xna.Framework.Graphics
 {
-    internal partial class ConstantBuffer : GraphicsResource
+    public partial class ConstantBuffer : GraphicsResource
     {
         private readonly byte[] _buffer;
 

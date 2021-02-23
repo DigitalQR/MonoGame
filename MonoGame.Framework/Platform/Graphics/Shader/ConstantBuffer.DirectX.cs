@@ -5,7 +5,7 @@
 
 namespace Microsoft.Xna.Framework.Graphics
 {
-    internal partial class ConstantBuffer : GraphicsResource
+    public partial class ConstantBuffer : GraphicsResource
     {
         private SharpDX.Direct3D11.Buffer _cbuffer;
 

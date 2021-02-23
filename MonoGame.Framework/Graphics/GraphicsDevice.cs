@@ -1080,7 +1080,7 @@ namespace Microsoft.Xna.Framework.Graphics
             }
         }
 
-        internal void SetConstantBuffer(ShaderStage stage, int slot, ConstantBuffer buffer)
+        public void SetConstantBuffer(ShaderStage stage, int slot, ConstantBuffer buffer)
         {
             switch (stage)
             {

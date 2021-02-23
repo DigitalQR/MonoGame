@@ -107,7 +107,7 @@ namespace Microsoft.Xna.Framework.Graphics
             for (var a = 0; a < attributeCount; a++)
             {
                 Attributes[a].name = reader.ReadString();
-                Attributes[a].usage = (VertexElementUsage)reader.ReadByte();
+                Attributes[a].usage = new VertexElementUsage(reader.ReadByte() + 1); // support old format starting at 0
                 Attributes[a].index = reader.ReadByte();
                 Attributes[a].location = reader.ReadInt16();
             }

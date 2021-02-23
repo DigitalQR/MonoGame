@@ -16,7 +16,7 @@ namespace Microsoft.Xna.Framework.Content
 			{
 				var offset = reader.ReadInt32();
 				var elementFormat = (VertexElementFormat)reader.ReadInt32();
-				var elementUsage = (VertexElementUsage)reader.ReadInt32();
+                var elementUsage = new VertexElementUsage(reader.ReadInt32() + 1); // support old format starting at 0
 				var usageIndex = reader.ReadInt32();
 				elements[i] = new VertexElement(offset, elementFormat, elementUsage, usageIndex);
 			}

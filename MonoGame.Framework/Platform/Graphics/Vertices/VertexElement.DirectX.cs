@@ -25,39 +25,7 @@ namespace Microsoft.Xna.Framework.Graphics
         {
             var element = new SharpDX.Direct3D11.InputElement();
 
-            switch (_usage)
-            {
-                case VertexElementUsage.Position:
-                    element.SemanticName = "POSITION";
-                    break;
-                case VertexElementUsage.Color:
-                    element.SemanticName = "COLOR";
-                    break;
-                case VertexElementUsage.Normal:
-                    element.SemanticName = "NORMAL";
-                    break;
-                case VertexElementUsage.TextureCoordinate:
-                    element.SemanticName = "TEXCOORD";
-                    break;
-                case VertexElementUsage.BlendIndices:
-                    element.SemanticName = "BLENDINDICES";
-                    break;
-                case VertexElementUsage.BlendWeight:
-                    element.SemanticName = "BLENDWEIGHT";
-                    break;
-                case VertexElementUsage.Binormal:
-                    element.SemanticName = "BINORMAL";
-                    break;
-                case VertexElementUsage.Tangent:
-                    element.SemanticName = "TANGENT";
-                    break;
-                case VertexElementUsage.PointSize:
-                    element.SemanticName = "PSIZE";
-                    break;
-                default:
-                    throw new NotSupportedException("Unknown vertex element usage!");
-            }
-
+            element.SemanticName = _usage.Semantic;
             element.SemanticIndex = _usageIndex;
 
             switch (_format)

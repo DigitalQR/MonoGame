@@ -101,7 +101,7 @@ namespace Microsoft.Xna.Framework.Graphics
             // assumptions are not correct, we still get a useful hash code because we use XOR.)
             int hashCode = _offset;
             hashCode ^= (int)_format << 9;
-            hashCode ^= (int)_usage << (9 + 4);
+            hashCode ^= (int)_usage.GetHashCode();// << (9 + 4);
             hashCode ^= _usageIndex << (9 + 4 + 4);
             return hashCode;
             // ReSharper restore NonReadonlyMemberInGetHashCode

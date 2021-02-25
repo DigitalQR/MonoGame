@@ -3,6 +3,7 @@
 // file 'LICENSE.txt', which is part of this source code package.
 
 using System;
+using System.Runtime.InteropServices;
 
 namespace Microsoft.Xna.Framework.Graphics
 {
@@ -16,6 +17,8 @@ namespace Microsoft.Xna.Framework.Graphics
 
         private readonly string _name;
 
+        private readonly bool _isManualBuffer;
+
         private ulong _stateKey;
 
         private bool _dirty;
@@ -27,6 +30,8 @@ namespace Microsoft.Xna.Framework.Graphics
         public ConstantBuffer(ConstantBuffer cloneSource)
         {
             GraphicsDevice = cloneSource.GraphicsDevice;
+
+            _isManualBuffer = cloneSource._isManualBuffer;
 
             // Share the immutable types.
             _name = cloneSource._name;
@@ -47,9 +52,27 @@ namespace Microsoft.Xna.Framework.Graphics
             GraphicsDevice = device;
 
             _buffer = new byte[sizeInBytes];
+            _isManualBuffer = false;
 
             _parameters = parameterIndexes;
             _offsets = parameterOffsets;
+
+            _name = name;
+
+            PlatformInitialize();
+        }
+
+        public ConstantBuffer(GraphicsDevice device,
+                              int sizeInBytes,
+                              string name)
+        {
+            GraphicsDevice = device;
+
+            _buffer = new byte[sizeInBytes];
+            _isManualBuffer = true;
+
+            _parameters = null;
+            _offsets = null;
 
             _name = name;
 
@@ -61,7 +84,7 @@ namespace Microsoft.Xna.Framework.Graphics
             PlatformClear();
         }
 
-        private void SetData(int offset, int rows, int columns, object data)
+        public void SetDataDirect(int offset, int rows, int columns, object data)
         {
             // Shader registers are always 4 bytes and all the
             // incoming data objects should be 4 bytes per element.
@@ -100,6 +123,28 @@ namespace Microsoft.Xna.Framework.Graphics
             }
         }
 
+        public void SetDataDirect(object data, int length)
+        {
+            System.Diagnostics.Debug.Assert(_isManualBuffer);
+            _dirty = true;
+
+            IntPtr ptr = Marshal.AllocHGlobal(length);
+            Marshal.StructureToPtr(data, ptr, true);
+            Marshal.Copy(ptr, _buffer, 0, length);
+            Marshal.FreeHGlobal(ptr);
+        }
+
+        public void SetDataDirect<T>(T data, int length) where T : struct
+        {
+            System.Diagnostics.Debug.Assert(_isManualBuffer);
+            _dirty = true;
+
+            IntPtr ptr = Marshal.AllocHGlobal(length);
+            Marshal.StructureToPtr(data, ptr, true);
+            Marshal.Copy(ptr, _buffer, 0, length);
+            Marshal.FreeHGlobal(ptr);
+        }
+
         private int SetParameter(int offset, EffectParameter param)
         {
             const int elementSize = 4;
@@ -129,12 +174,12 @@ namespace Microsoft.Xna.Framework.Graphics
                         if (param.ParameterClass == EffectParameterClass.Matrix)
                         {
                             rowsUsed = param.ColumnCount;
-                            SetData(offset, param.ColumnCount, param.RowCount, param.Data);
+                            SetDataDirect(offset, param.ColumnCount, param.RowCount, param.Data);
                         }
                         else
                         {
                             rowsUsed = param.RowCount;
-                            SetData(offset, param.RowCount, param.ColumnCount, param.Data);
+                            SetDataDirect(offset, param.RowCount, param.ColumnCount, param.Data);
                         }
                         break;
                     default:
@@ -147,6 +192,8 @@ namespace Microsoft.Xna.Framework.Graphics
 
         public void Update(EffectParameterCollection parameters)
         {
+            System.Diagnostics.Debug.Assert(!_isManualBuffer);
+
             // TODO:  We should be doing some sort of dirty state 
             // testing here.
             //

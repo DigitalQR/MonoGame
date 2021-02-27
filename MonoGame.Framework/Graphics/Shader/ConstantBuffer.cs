@@ -123,14 +123,14 @@ namespace Microsoft.Xna.Framework.Graphics
             }
         }
 
-        public void SetDataDirect(object data, int length)
+        public void SetDataDirect(object data, int offset, int length)
         {
             System.Diagnostics.Debug.Assert(_isManualBuffer);
             _dirty = true;
 
             IntPtr ptr = Marshal.AllocHGlobal(length);
             Marshal.StructureToPtr(data, ptr, true);
-            Marshal.Copy(ptr, _buffer, 0, length);
+            Marshal.Copy(ptr, _buffer, offset, length);
             Marshal.FreeHGlobal(ptr);
         }
 

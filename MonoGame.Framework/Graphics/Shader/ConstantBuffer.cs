@@ -134,17 +134,6 @@ namespace Microsoft.Xna.Framework.Graphics
             Marshal.FreeHGlobal(ptr);
         }
 
-        public void SetDataDirect<T>(T data, int length) where T : struct
-        {
-            System.Diagnostics.Debug.Assert(_isManualBuffer);
-            _dirty = true;
-
-            IntPtr ptr = Marshal.AllocHGlobal(length);
-            Marshal.StructureToPtr(data, ptr, true);
-            Marshal.Copy(ptr, _buffer, 0, length);
-            Marshal.FreeHGlobal(ptr);
-        }
-
         private int SetParameter(int offset, EffectParameter param)
         {
             const int elementSize = 4;

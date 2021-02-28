@@ -1327,7 +1327,7 @@ namespace Microsoft.Xna.Framework.Graphics
                 }
             }
 
-            bool validForGeom = (_vertexShader != null && _pixelShader != null);
+            bool validForGeom = (_vertexShader != null || _pixelShader != null);
             bool validForCompute = (_computeShader != null);
 
             if (!validForGeom && !validForCompute)

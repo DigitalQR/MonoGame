@@ -989,16 +989,10 @@ namespace Microsoft.Xna.Framework.Graphics
 
             _currentDepthTargetBinding = depthTarget;
 
-            int renderTargetWidth;
-            int renderTargetHeight;
-
             var renderTarget = PlatformApplyDepthStencilTarget();
 
             // We clear the render target if asked.
-            clearTarget = renderTarget.RenderTargetUsage == RenderTargetUsage.DiscardContents;
-
-            renderTargetWidth = renderTarget.Width;
-            renderTargetHeight = renderTarget.Height;
+            clearTarget = renderTarget != null && renderTarget.RenderTargetUsage == RenderTargetUsage.DiscardContents;
 
             // In XNA 4, because of hardware limitations on Xbox, when
             // a render target doesn't have PreserveContents as its usage

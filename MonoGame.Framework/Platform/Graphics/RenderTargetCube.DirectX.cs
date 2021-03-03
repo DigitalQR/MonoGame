@@ -11,10 +11,11 @@ namespace Microsoft.Xna.Framework.Graphics
     public partial class RenderTargetCube
     {
         private RenderTargetView[] _renderTargetViews;
-        private DepthStencilView _depthStencilView;
 
-        private void PlatformConstruct(GraphicsDevice graphicsDevice, bool mipMap, DepthFormat preferredDepthFormat, int preferredMultiSampleCount, RenderTargetUsage usage)
+        private void PlatformConstruct(GraphicsDevice graphicsDevice, bool mipMap, int preferredMultiSampleCount, RenderTargetUsage usage)
         {
+            System.Diagnostics.Debug.Assert(IsValidSurface, "RenderTargetCube must have a valid surface format");
+
             // Create one render target view per cube map face.
             _renderTargetViews = new RenderTargetView[6];
             for (int i = 0; i < _renderTargetViews.Length; i++)
@@ -22,7 +23,7 @@ namespace Microsoft.Xna.Framework.Graphics
                 var renderTargetViewDescription = new RenderTargetViewDescription
                 {
                     Dimension = RenderTargetViewDimension.Texture2DArray,
-                    Format = SharpDXHelper.ToFormat(this.Format),
+                    Format = SharpDXHelper.ToResourceFormat(this),
                     Texture2DArray =
                     {
                         ArraySize = 1,
@@ -32,38 +33,6 @@ namespace Microsoft.Xna.Framework.Graphics
                 };
 
                 _renderTargetViews[i] = new RenderTargetView(graphicsDevice._d3dDevice, GetTexture(), renderTargetViewDescription);
-            }
-
-            // If we don't need a depth buffer then we're done.
-            if (preferredDepthFormat == DepthFormat.None)
-                return;
-
-            var sampleDescription = new SampleDescription(1, 0);
-            if (preferredMultiSampleCount > 1)
-            {
-                sampleDescription.Count = preferredMultiSampleCount;
-                sampleDescription.Quality = (int)StandardMultisampleQualityLevels.StandardMultisamplePattern;
-            }
-
-            var depthStencilDescription = new Texture2DDescription
-            {
-                Format = SharpDXHelper.ToFormat(preferredDepthFormat),
-                ArraySize = 1,
-                MipLevels = 1,
-                Width = size,
-                Height = size,
-                SampleDescription = sampleDescription,
-                BindFlags = BindFlags.DepthStencil,
-            };
-
-            using (var depthBuffer = new SharpDX.Direct3D11.Texture2D(graphicsDevice._d3dDevice, depthStencilDescription))
-            {
-                var depthStencilViewDescription = new DepthStencilViewDescription
-                {
-                    Dimension = DepthStencilViewDimension.Texture2D,
-                    Format = SharpDXHelper.ToFormat(preferredDepthFormat),
-                };
-                _depthStencilView = new DepthStencilView(graphicsDevice._d3dDevice, depthBuffer, depthStencilViewDescription);
             }
         }
 
@@ -77,7 +46,6 @@ namespace Microsoft.Xna.Framework.Graphics
                         _renderTargetViews[i].Dispose();
 
                     _renderTargetViews = null;
-                    SharpDX.Utilities.Dispose(ref _depthStencilView);
                 }
             }
 
@@ -95,7 +63,7 @@ namespace Microsoft.Xna.Framework.Graphics
         [CLSCompliant(false)]
         public DepthStencilView GetDepthStencilView()
         {
-            return _depthStencilView;
+            return null;
         }
     }
 }

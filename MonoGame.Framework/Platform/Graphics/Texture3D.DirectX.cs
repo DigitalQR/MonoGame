@@ -29,6 +29,48 @@ namespace Microsoft.Xna.Framework.Graphics
             GetTexture();
         }
 
+        internal override ShaderResourceView GetShaderResourceView()
+        {
+            if (_shaderResourceView == null)
+            {
+                var resource = GetTexture();
+                var desc = new ShaderResourceViewDescription
+                {
+                    Format = SharpDXHelper.ToViewFormat(this)
+                };
+
+                desc.Dimension = SharpDX.Direct3D.ShaderResourceViewDimension.Texture3D;
+                desc.Texture3D = new ShaderResourceViewDescription.Texture3DResource
+                {
+                    MostDetailedMip = 0,
+                    MipLevels = _levelCount
+                };
+
+                _shaderResourceView = new ShaderResourceView(GraphicsDevice._d3dDevice, resource, desc);
+            }
+
+            return _shaderResourceView;
+        }
+
+        internal override UnorderedAccessView GetUnorderedResourceView()
+        {
+            if (_unorderedAccessView == null)
+            {
+                var desc = new UnorderedAccessViewDescription
+                {
+                    Format = SharpDXHelper.ToViewFormat(this),
+                };
+
+                desc.Dimension = UnorderedAccessViewDimension.Texture3D;
+                desc.Texture3D = new UnorderedAccessViewDescription.Texture3DResource
+                {
+                };
+
+                _unorderedAccessView = new UnorderedAccessView(GraphicsDevice._d3dDevice, GetTexture(), desc);
+            }
+
+            return _unorderedAccessView;
+        }
 
         internal override Resource CreateTexture()
         {
@@ -38,7 +80,7 @@ namespace Microsoft.Xna.Framework.Graphics
                 Height = _height,
                 Depth = _depth,
                 MipLevels = _levelCount,
-                Format = SharpDXHelper.ToFormat(_format),
+                Format = SharpDXHelper.ToResourceFormat(this),
                 BindFlags = BindFlags.ShaderResource,
                 CpuAccessFlags = CpuAccessFlags.None,
                 Usage = ResourceUsage.Default,
@@ -47,7 +89,9 @@ namespace Microsoft.Xna.Framework.Graphics
 
             if (renderTarget)
             {
+                System.Diagnostics.Debug.Assert(IsValidSurface);
                 description.BindFlags |= BindFlags.RenderTarget;
+
                 if (mipMap)
                 {
                     // Note: XNA 4 does not have a method Texture.GenerateMipMaps() 
@@ -103,7 +147,7 @@ namespace Microsoft.Xna.Framework.Graphics
                 Height = _height,
                 Depth = _depth,
                 MipLevels = 1,
-                Format = SharpDXHelper.ToFormat(_format),
+                Format = SharpDXHelper.ToResourceFormat(this),
                 BindFlags = BindFlags.None,
                 CpuAccessFlags = CpuAccessFlags.Read,
                 Usage = ResourceUsage.Staging,
@@ -127,7 +171,7 @@ namespace Microsoft.Xna.Framework.Graphics
                         // Some drivers may add pitch to rows or slices.
                         // We need to copy each row separatly and skip trailing zeros.
                         var currentIndex = startIndex;
-                        var elementSize = _format.GetSize();
+                        var elementSize = GetFormatSize();
                         var elementsInRow = right - left;
                         var rowsInSlice = bottom - top;
                         for (var slice = front; slice < back; slice++)

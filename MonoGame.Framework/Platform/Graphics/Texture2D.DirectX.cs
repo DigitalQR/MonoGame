@@ -39,6 +39,81 @@ namespace Microsoft.Xna.Framework.Graphics
             _sampleDescription = new SampleDescription(1, 0);
         }
 
+        private void PlatformConstruct(int width, int height, bool mipmap, DepthFormat format, SurfaceType type, bool shared)
+        {
+            _shared = shared;
+            _mipmap = mipmap;
+            _sampleDescription = new SampleDescription(1, 0);
+        }
+
+        internal override ShaderResourceView GetShaderResourceView()
+        {
+            if (_shaderResourceView == null)
+            {
+                var resource = GetTexture();
+                var desc = new ShaderResourceViewDescription
+                {
+                    Format = SharpDXHelper.ToViewFormat(this)
+                };
+
+                if (ArraySize > 1)
+                {
+                    desc.Dimension = SharpDX.Direct3D.ShaderResourceViewDimension.Texture2DArray;
+                    desc.Texture2DArray = new ShaderResourceViewDescription.Texture2DArrayResource
+                    {
+                        FirstArraySlice = 0,
+                        ArraySize = ArraySize,
+                        MostDetailedMip = 0,
+                        MipLevels = _levelCount
+                    };
+                }
+                else
+                {
+                    desc.Dimension = SharpDX.Direct3D.ShaderResourceViewDimension.Texture2D;
+                    desc.Texture2D = new ShaderResourceViewDescription.Texture2DResource
+                    {
+                        MostDetailedMip = 0,
+                        MipLevels = _levelCount
+                    };
+                }
+
+                _shaderResourceView = new ShaderResourceView(GraphicsDevice._d3dDevice, resource, desc);
+            }
+
+            return _shaderResourceView;
+        }
+
+        internal override UnorderedAccessView GetUnorderedResourceView()
+        {
+            if (_unorderedAccessView == null)
+            {
+                var desc = new UnorderedAccessViewDescription
+                {
+                    Format = SharpDXHelper.ToViewFormat(this),
+                };
+
+                if (ArraySize > 1)
+                {
+                    desc.Dimension = UnorderedAccessViewDimension.Texture2DArray;
+                    desc.Texture2DArray = new UnorderedAccessViewDescription.Texture2DArrayResource
+                    {
+                        FirstArraySlice = 0,
+                        ArraySize = ArraySize
+                    };
+                }
+                else
+                {
+                    desc.Dimension = UnorderedAccessViewDimension.Texture2D;
+                    desc.Texture2D = new UnorderedAccessViewDescription.Texture2DResource
+                    {
+                    };
+                }
+                _unorderedAccessView = new UnorderedAccessView(GraphicsDevice._d3dDevice, GetTexture(), desc);
+            }
+
+            return _unorderedAccessView;
+        }
+
         private void PlatformSetData<T>(int level, T[] data, int startIndex, int elementCount) where T : struct
         {
             int w, h;
@@ -46,7 +121,7 @@ namespace Microsoft.Xna.Framework.Graphics
 
             // For DXT compressed formats the width and height must be
             // a multiple of 4 for the complete mip level to be set.
-            if (_format.IsCompressedFormat())
+            if (IsFormatCompressed())
             {
                 w = (w + 3) & ~3;
                 h = (h + 3) & ~3;
@@ -116,7 +191,9 @@ namespace Microsoft.Xna.Framework.Graphics
             // TODO: We should probably be pooling these staging resources
             // and not creating a new one each time.
             //
-            var min = _format.IsCompressedFormat() ? 4 : 1;
+            _surfaceFormat.GetSize();
+
+            var min = IsFormatCompressed() ? 4 : 1;
             var levelWidth = Math.Max(width >> level, min);
             var levelHeight = Math.Max(height >> level, min);
 
@@ -127,7 +204,7 @@ namespace Microsoft.Xna.Framework.Graphics
                 desc.Height = levelHeight;
                 desc.MipLevels = 1;
                 desc.ArraySize = 1;
-                desc.Format = SharpDXHelper.ToFormat(_format);
+                desc.Format = SharpDXHelper.ToResourceFormat(this);
                 desc.BindFlags = BindFlags.None;
                 desc.CpuAccessFlags = CpuAccessFlags.Read;
                 desc.SampleDescription = SampleDescription;
@@ -156,8 +233,8 @@ namespace Microsoft.Xna.Framework.Graphics
                 {
                     var databox = d3dContext.MapSubresource(_cachedStagingTexture, 0, MapMode.Read, MapFlags.None, out stream);
 
-                    var elementSize = _format.GetSize();
-                    if (_format.IsCompressedFormat())
+                    var elementSize = GetFormatSize();
+                    if (IsFormatCompressed())
                     {
                         // for 4x4 block compression formats an element is one block, so elementsInRow
                         // and number of rows are 1/4 of number of pixels in width and height of the rectangle
@@ -219,7 +296,7 @@ namespace Microsoft.Xna.Framework.Graphics
             desc.Height = height;
             desc.MipLevels = _levelCount;
             desc.ArraySize = ArraySize;
-            desc.Format = SharpDXHelper.ToFormat(_format);
+            desc.Format = SharpDXHelper.ToResourceFormat(this);
             desc.BindFlags = BindFlags.ShaderResource;
             desc.CpuAccessFlags = CpuAccessFlags.None;
             desc.SampleDescription = SampleDescription;

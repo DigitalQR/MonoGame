@@ -6,6 +6,7 @@ namespace Microsoft.Xna.Framework
 {
     using System;
     using Graphics;
+    using SharpDX.Direct3D;
     using SharpDX.Mathematics.Interop;
 
     static internal class SharpDXHelper
@@ -41,7 +42,43 @@ namespace Microsoft.Xna.Framework
             return effect;
         }
 
-        static public SharpDX.DXGI.Format ToFormat(DepthFormat format)
+        static public SharpDX.DXGI.Format ToResourceFormat(Texture texture)
+        {
+            if (texture.IsValidSurface)
+                return ToFormat(texture.SurfaceFormat);
+            else
+                return ToResourceFormat(texture.DepthFormat);
+        }
+
+        static public SharpDX.DXGI.Format ToViewFormat(Texture texture)
+        {
+            if (texture.IsValidSurface)
+                return ToFormat(texture.SurfaceFormat);
+            else
+                return ToViewFormat(texture.DepthFormat);
+        }
+
+        static public SharpDX.DXGI.Format ToResourceFormat(DepthFormat format)
+        {
+            switch (format)
+            {
+                default:
+                case DepthFormat.None:
+                    return SharpDX.DXGI.Format.Unknown;
+
+                case DepthFormat.Depth16:
+                    return SharpDX.DXGI.Format.D16_UNorm;
+
+                case DepthFormat.Depth24:
+                case DepthFormat.Depth24Stencil8:
+                    return SharpDX.DXGI.Format.R24G8_Typeless;
+
+                //case DepthFormat.Depth32:
+                //    return SharpDX.DXGI.Format.R32_Typeless;
+            }
+        }
+
+        static public SharpDX.DXGI.Format ToViewFormat(DepthFormat format)
         {
             switch (format)
             {
@@ -62,8 +99,11 @@ namespace Microsoft.Xna.Framework
         {
             switch (format)
             {
-                case SurfaceFormat.Color:
                 default:
+                case SurfaceFormat.None:
+                    return SharpDX.DXGI.Format.Unknown;
+
+                case SurfaceFormat.Color:
                     return SharpDX.DXGI.Format.R8G8B8A8_UNorm;
 
                 case SurfaceFormat.Bgr565:

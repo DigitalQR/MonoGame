@@ -46,35 +46,28 @@ namespace Microsoft.Xna.Framework.Graphics
 {
 	// http://msdn.microsoft.com/en-us/library/ff434403.aspx
 	public struct RenderTargetBinding
-	{
+    {
         private readonly Texture _renderTarget;
         private readonly int _arraySlice;
-        private DepthFormat _depthFormat;
 
-		public Texture RenderTarget 
+        public Texture RenderTarget
         {
-			get { return _renderTarget; }
-		}
+            get { return _renderTarget; }
+        }
 
         public int ArraySlice
         {
             get { return _arraySlice; }
         }
 
-        internal DepthFormat DepthFormat
+        public RenderTargetBinding(RenderTarget2D renderTarget)
         {
-            get { return _depthFormat; }
-        }
+            if (renderTarget == null)
+                throw new ArgumentNullException("renderTarget");
 
-		public RenderTargetBinding(RenderTarget2D renderTarget)
-		{
-			if (renderTarget == null) 
-				throw new ArgumentNullException("renderTarget");
-
-			_renderTarget = renderTarget;
+            _renderTarget = renderTarget;
             _arraySlice = (int)CubeMapFace.PositiveX;
-            _depthFormat = renderTarget.DepthStencilFormat;
-		}
+        }
 
         public RenderTargetBinding(RenderTargetCube renderTarget, CubeMapFace cubeMapFace)
         {
@@ -85,7 +78,6 @@ namespace Microsoft.Xna.Framework.Graphics
 
             _renderTarget = renderTarget;
             _arraySlice = (int)cubeMapFace;
-            _depthFormat = renderTarget.DepthStencilFormat;
         }
 
 #if DIRECTX
@@ -101,7 +93,6 @@ namespace Microsoft.Xna.Framework.Graphics
 
             _renderTarget = renderTarget;
             _arraySlice = arraySlice;
-            _depthFormat = renderTarget.DepthStencilFormat;
         }
 
         public RenderTargetBinding(RenderTarget3D renderTarget)
@@ -111,7 +102,6 @@ namespace Microsoft.Xna.Framework.Graphics
 
             _renderTarget = renderTarget;
             _arraySlice = 0;
-            _depthFormat = renderTarget.DepthStencilFormat;
         }
 
         public RenderTargetBinding(RenderTarget3D renderTarget, int arraySlice)
@@ -123,7 +113,6 @@ namespace Microsoft.Xna.Framework.Graphics
 
             _renderTarget = renderTarget;
             _arraySlice = arraySlice;
-            _depthFormat = renderTarget.DepthStencilFormat;
         }
 
 #endif 

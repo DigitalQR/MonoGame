@@ -9,10 +9,10 @@ namespace Microsoft.Xna.Framework.Graphics
 {
     public abstract partial class Texture
     {
-        private Resource _texture;
+        protected Resource _texture;
 
-        private ShaderResourceView _shaderResourceView;
-        private UnorderedAccessView _unorderedAccessView;
+        protected ShaderResourceView _shaderResourceView;
+        protected UnorderedAccessView _unorderedAccessView;
 
         /// <summary>
         /// Gets the handle to a shared resource.
@@ -36,22 +36,9 @@ namespace Microsoft.Xna.Framework.Graphics
 
             return _texture;
         }
+        internal abstract ShaderResourceView GetShaderResourceView();
 
-        internal ShaderResourceView GetShaderResourceView()
-        {
-            if (_shaderResourceView == null)
-                _shaderResourceView = new ShaderResourceView(GraphicsDevice._d3dDevice, GetTexture());
-
-            return _shaderResourceView;
-        }
-
-        internal UnorderedAccessView GetUnorderedResourceView()
-        {
-            if (_unorderedAccessView == null)
-                _unorderedAccessView = new UnorderedAccessView(GraphicsDevice._d3dDevice, GetTexture());
-
-            return _unorderedAccessView;
-        }
+        internal abstract UnorderedAccessView GetUnorderedResourceView();
 
         private void PlatformGraphicsDeviceResetting()
         {

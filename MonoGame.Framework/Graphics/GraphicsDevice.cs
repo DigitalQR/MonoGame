@@ -82,6 +82,7 @@ namespace Microsoft.Xna.Framework.Graphics
 
         private readonly RenderTargetBinding[] _currentRenderTargetBindings = new RenderTargetBinding[8];
         private int _currentRenderTargetCount;
+        private RenderTargetBinding _currentDepthTargetBinding;
         private readonly RenderTargetBinding[] _tempRenderTargetBinding = new RenderTargetBinding[1];
 
         internal GraphicsCapabilities GraphicsCapabilities { get; private set; }
@@ -207,12 +208,20 @@ namespace Microsoft.Xna.Framework.Graphics
             }
         }
 
+        internal bool IsDepthTargetBound
+        {
+            get
+            {
+                return _currentDepthTargetBinding.RenderTarget != null;
+            }
+        }
+
         internal DepthFormat ActiveDepthFormat
         {
             get
             {
                 return IsRenderTargetBound
-                    ? _currentRenderTargetBindings[0].DepthFormat
+                    ? _currentDepthTargetBinding.RenderTarget.DepthFormat
                     : PresentationParameters.DepthStencilFormat;
             }
         }
@@ -574,12 +583,26 @@ namespace Microsoft.Xna.Framework.Graphics
             PlatformApplyState(applyShaders);
         }
 
-        public void Clear(Color color)
+        public void ClearColour(Color color)
         {
             var options = ClearOptions.Target;
-            options |= ClearOptions.DepthBuffer;
-            options |= ClearOptions.Stencil;
             PlatformClear(options, color.ToVector4(), _viewport.MaxDepth, 0);
+
+            unchecked
+            {
+                _graphicsMetrics._clearCount++;
+            }
+        }
+
+        public void ClearDepthStencil()
+        {
+            ClearDepthStencil(_viewport.MaxDepth);
+        }
+
+        public void ClearDepthStencil(float depth, int stencil = 0)
+        {
+            var options = ClearOptions.DepthBuffer | ClearOptions.Stencil;
+            PlatformClear(options, Vector4.Zero, depth, stencil);
 
             unchecked
             {
@@ -867,6 +890,9 @@ namespace Microsoft.Xna.Framework.Graphics
                         isEqual = false;
                         break;
                     }
+
+                    if (_currentRenderTargetBindings[i].RenderTarget != null && !_currentRenderTargetBindings[i].RenderTarget.IsValidSurface)
+                        throw new InvalidOperationException("Cannot set invalid render target with non-surface format");
                 }
 
                 if (isEqual)
@@ -888,6 +914,21 @@ namespace Microsoft.Xna.Framework.Graphics
                 {
                     _graphicsMetrics._targetCount += renderTargetCount;
                 }
+            }
+        }
+
+        public void SetDepthStencilTarget(RenderTargetBinding renderTarget)
+        {
+            if (_currentDepthTargetBinding.RenderTarget == renderTarget.RenderTarget && _currentDepthTargetBinding.ArraySlice == renderTarget.ArraySlice)
+                return;
+
+            ApplyDepthStencilTarget(renderTarget);
+
+
+            unchecked
+            {
+                // TODO - Depth target count
+                _graphicsMetrics._targetCount += 1;
             }
         }
 
@@ -937,10 +978,36 @@ namespace Microsoft.Xna.Framework.Graphics
             // a render target doesn't have PreserveContents as its usage
             // it is cleared before being rendered to.
             if (clearTarget)
-                Clear(DiscardColor);
+                ClearColour(DiscardColor);
         }
 
-		public RenderTargetBinding[] GetRenderTargets()
+        internal void ApplyDepthStencilTarget(RenderTargetBinding depthTarget)
+        {
+            var clearTarget = false;
+
+            PlatformResolveDepthTarget();
+
+            _currentDepthTargetBinding = depthTarget;
+
+            int renderTargetWidth;
+            int renderTargetHeight;
+
+            var renderTarget = PlatformApplyDepthStencilTarget();
+
+            // We clear the render target if asked.
+            clearTarget = renderTarget.RenderTargetUsage == RenderTargetUsage.DiscardContents;
+
+            renderTargetWidth = renderTarget.Width;
+            renderTargetHeight = renderTarget.Height;
+
+            // In XNA 4, because of hardware limitations on Xbox, when
+            // a render target doesn't have PreserveContents as its usage
+            // it is cleared before being rendered to.
+            if (clearTarget)
+                ClearDepthStencil();
+        }
+
+        public RenderTargetBinding[] GetRenderTargets()
 		{
             // Return a correctly sized copy our internal array.
             var bindings = new RenderTargetBinding[_currentRenderTargetCount];

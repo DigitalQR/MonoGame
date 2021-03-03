@@ -811,6 +811,11 @@ namespace Microsoft.Xna.Framework.Graphics
             return false;
         }
 
+        public static bool IsCompressedFormat(this DepthFormat format)
+        {
+            return false;
+        }
+
         public static int GetSize(this SurfaceFormat surfaceFormat)
         {
             switch (surfaceFormat)
@@ -865,6 +870,21 @@ namespace Microsoft.Xna.Framework.Graphics
                     return 8;
                 case SurfaceFormat.Vector4:
                     return 16;
+                default:
+                    throw new ArgumentException();
+            }
+        }
+
+        public static int GetSize(this DepthFormat depthFormat)
+        {
+            switch (depthFormat)
+            {
+                case DepthFormat.Depth24Stencil8:
+                    return 4;
+                case DepthFormat.Depth24:
+                    return 3;
+                case DepthFormat.Depth16:
+                    return 2;
                 default:
                     throw new ArgumentException();
             }

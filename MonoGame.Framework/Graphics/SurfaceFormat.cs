@@ -10,6 +10,11 @@ namespace Microsoft.Xna.Framework.Graphics
     public enum SurfaceFormat
     {
         /// <summary>
+        /// Not channels will be created
+        /// </summary>
+        None,
+
+        /// <summary>
         /// Unsigned 32-bit ARGB pixel format for store 8 bits per channel. 
         /// </summary>
         Color,
@@ -85,10 +90,6 @@ namespace Microsoft.Xna.Framework.Graphics
         /// Float 64-bit ARGB format for store 16 bits per channel. 
         /// </summary>
         HalfVector4,
-        /// <summary>
-        /// Float pixel format for high dynamic range data.
-        /// </summary>
-        HdrBlendable,
 
         #region Extensions
 
@@ -102,29 +103,33 @@ namespace Microsoft.Xna.Framework.Graphics
         Bgra32 = 21,    // B8G8R8A8    
 
         /// <summary>
+        /// Float pixel format for high dynamic range data.
+        /// </summary>
+        HdrBlendable = 30,
+        /// <summary>
         /// Unsigned 32-bit RGBA sRGB pixel format that supports 8 bits per channel.
         /// </summary>
-        ColorSRgb = 30,
+        ColorSRgb = 31,
         /// <summary>
         /// Unsigned 32-bit sRGB pixel format that supports 8 bits per channel. 8 bits are unused.
         /// </summary>
-        Bgr32SRgb = 31,
+        Bgr32SRgb = 32,
         /// <summary>
         /// Unsigned 32-bit sRGB pixel format that supports 8 bits per channel.
         /// </summary>
-        Bgra32SRgb = 32,
+        Bgra32SRgb = 33,
         /// <summary>
         /// DXT1. sRGB texture format with compression. Surface dimensions must be a multiple of 4.
         /// </summary>
-        Dxt1SRgb = 33,
+        Dxt1SRgb = 34,
         /// <summary>
         /// DXT3. sRGB texture format with compression. Surface dimensions must be a multiple of 4.
         /// </summary>
-        Dxt3SRgb = 34,
+        Dxt3SRgb = 35,
         /// <summary>
         /// DXT5. sRGB texture format with compression. Surface dimensions must be a multiple of 4.
         /// </summary>
-        Dxt5SRgb = 35,
+        Dxt5SRgb = 36,
 
 		/// <summary>
         /// PowerVR texture compression format (iOS and Android).

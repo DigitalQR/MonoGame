@@ -13,8 +13,7 @@ namespace Microsoft.Xna.Framework.Graphics
         private RenderTargetView _renderTargetView;
         private DepthStencilView _depthStencilView;
 
-        private void PlatformConstruct(GraphicsDevice graphicsDevice, int width, int height, bool mipMap,
-            DepthFormat preferredDepthFormat, int preferredMultiSampleCount, RenderTargetUsage usage)
+        private void PlatformConstruct(GraphicsDevice graphicsDevice, int width, int height, bool mipMap, int preferredMultiSampleCount, RenderTargetUsage usage)
         {
             // Setup the multisampling description.
             var multisampleDesc = new SharpDX.DXGI.SampleDescription(1, 0);
@@ -22,28 +21,6 @@ namespace Microsoft.Xna.Framework.Graphics
             {
                 multisampleDesc.Count = preferredMultiSampleCount;
                 multisampleDesc.Quality = (int)StandardMultisampleQualityLevels.StandardMultisamplePattern;
-            }
-
-            // Create a descriptor for the depth/stencil buffer.
-            // Allocate a 2-D surface as the depth/stencil buffer.
-            // Create a DepthStencil view on this surface to use on bind.
-            using (var depthBuffer = new SharpDX.Direct3D11.Texture2D(graphicsDevice._d3dDevice, new Texture2DDescription
-            {
-                Format = SharpDXHelper.ToFormat(preferredDepthFormat),
-                ArraySize = 1,
-                MipLevels = 1,
-                Width = width,
-                Height = height,
-                SampleDescription = multisampleDesc,
-                BindFlags = BindFlags.DepthStencil,
-            }))
-            {
-                // Create the view for binding to the device.
-                _depthStencilView = new DepthStencilView(graphicsDevice._d3dDevice, depthBuffer, new DepthStencilViewDescription()
-                {
-                    Format = SharpDXHelper.ToFormat(preferredDepthFormat),
-                    Dimension = DepthStencilViewDimension.Texture2D
-                });
             }
         }
 
@@ -63,6 +40,9 @@ namespace Microsoft.Xna.Framework.Graphics
             if (arraySlice >= Depth)
                 throw new ArgumentOutOfRangeException("The arraySlice is out of range for this Texture3D.");
 
+            if (!IsValidSurface)
+                throw new InvalidOperationException("This render target does not have a valid surface type");
+
             // Dispose the previous target.
 	        if (_currentSlice != arraySlice && _renderTargetView != null)
 	        {
@@ -77,7 +57,7 @@ namespace Microsoft.Xna.Framework.Graphics
 
 	            var desc = new RenderTargetViewDescription
 	            {
-	                Format = SharpDXHelper.ToFormat(_format),
+	                Format = SharpDXHelper.ToResourceFormat(this),
 	                Dimension = RenderTargetViewDimension.Texture3D,
 	                Texture3D =
 	                    {
@@ -95,7 +75,22 @@ namespace Microsoft.Xna.Framework.Graphics
 
 	    DepthStencilView IRenderTarget.GetDepthStencilView()
 	    {
-	        return _depthStencilView;
+            if (!IsValidDepthStencil)
+                throw new InvalidOperationException("This render target does not have a valid surface type");
+
+            // Create the new target view interface.
+            if (_depthStencilView == null)
+            {
+                _currentSlice = 0;
+
+                _depthStencilView = new DepthStencilView(GraphicsDevice._d3dDevice, GetTexture(), new DepthStencilViewDescription()
+                {
+                    Format = SharpDXHelper.ToResourceFormat(this),
+                    Dimension = DepthStencilViewDimension.Texture2D,
+                });
+            }
+
+            return _depthStencilView;
 	    }
     }
 }

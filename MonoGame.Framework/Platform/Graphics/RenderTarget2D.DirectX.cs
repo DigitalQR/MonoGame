@@ -15,81 +15,64 @@ namespace Microsoft.Xna.Framework.Graphics
 
         private SampleDescription _msSampleDescription;
 
-        private void PlatformConstruct(GraphicsDevice graphicsDevice, int width, int height, bool mipMap,
-            DepthFormat preferredDepthFormat, int preferredMultiSampleCount, RenderTargetUsage usage, bool shared)
+        private void PlatformConstruct(GraphicsDevice graphicsDevice, int width, int height, bool mipMap, int preferredMultiSampleCount, RenderTargetUsage usage, bool shared)
         {
-            _msSampleDescription = GraphicsDevice.GetSupportedSampleDescription(SharpDXHelper.ToFormat(this.Format), this.MultiSampleCount);
-
-            GenerateIfRequired();
+            _msSampleDescription = GraphicsDevice.GetSupportedSampleDescription(SharpDXHelper.ToResourceFormat(this), this.MultiSampleCount);
         }
 
         private void GenerateIfRequired()
         {
-            if (_renderTargetViews != null)
-                return;
-
-            var viewTex = MultiSampleCount > 1 ? GetMSTexture() : GetTexture();
-
-            // Create a view interface on the rendertarget to use on bind.
-            if (ArraySize > 1)
+            if (IsValidSurface)
             {
-                _renderTargetViews = new RenderTargetView[ArraySize];
-                for (var i = 0; i < ArraySize; i++)
+                if (_renderTargetViews != null)
+                    return;
+
+                var viewTex = MultiSampleCount > 1 ? GetMSTexture() : GetTexture();
+
+                // Create a view interface on the rendertarget to use on bind.
+                if (ArraySize > 1)
                 {
-                    var renderTargetViewDescription = new RenderTargetViewDescription();
-                    if (MultiSampleCount > 1)
+                    _renderTargetViews = new RenderTargetView[ArraySize];
+                    for (var i = 0; i < ArraySize; i++)
                     {
-                        renderTargetViewDescription.Dimension = RenderTargetViewDimension.Texture2DMultisampledArray;
-                        renderTargetViewDescription.Texture2DMSArray.ArraySize = 1;
-                        renderTargetViewDescription.Texture2DMSArray.FirstArraySlice = i;
+                        var renderTargetViewDescription = new RenderTargetViewDescription();
+                        if (MultiSampleCount > 1)
+                        {
+                            renderTargetViewDescription.Dimension = RenderTargetViewDimension.Texture2DMultisampledArray;
+                            renderTargetViewDescription.Texture2DMSArray.ArraySize = 1;
+                            renderTargetViewDescription.Texture2DMSArray.FirstArraySlice = i;
+                        }
+                        else
+                        {
+                            renderTargetViewDescription.Dimension = RenderTargetViewDimension.Texture2DArray;
+                            renderTargetViewDescription.Texture2DArray.ArraySize = 1;
+                            renderTargetViewDescription.Texture2DArray.FirstArraySlice = i;
+                            renderTargetViewDescription.Texture2DArray.MipSlice = 0;
+                        }
+                        _renderTargetViews[i] = new RenderTargetView(
+                            GraphicsDevice._d3dDevice, viewTex, renderTargetViewDescription);
                     }
-                    else
-                    {
-                        renderTargetViewDescription.Dimension = RenderTargetViewDimension.Texture2DArray;
-                        renderTargetViewDescription.Texture2DArray.ArraySize = 1;
-                        renderTargetViewDescription.Texture2DArray.FirstArraySlice = i;
-                        renderTargetViewDescription.Texture2DArray.MipSlice = 0;
-                    }
-                    _renderTargetViews[i] = new RenderTargetView(
-                        GraphicsDevice._d3dDevice, viewTex, renderTargetViewDescription);
+                }
+                else
+                {
+                    _renderTargetViews = new[] { new RenderTargetView(GraphicsDevice._d3dDevice, viewTex) };
                 }
             }
-            else
+            else if (IsValidDepthStencil)
             {
-                _renderTargetViews = new[] { new RenderTargetView(GraphicsDevice._d3dDevice, viewTex) };
-            }
+                if (_depthStencilView != null)
+                    return;
 
-            // If we don't need a depth buffer then we're done.
-            if (DepthStencilFormat == DepthFormat.None)
-                return;
+                System.Diagnostics.Debug.Assert(ArraySize <= 1);
 
-            // The depth stencil view's multisampling configuration must strictly
-            // match the texture's multisampling configuration.  Ignore whatever parameters
-            // were provided and use the texture's configuration so that things are
-            // guarenteed to work.
-            var multisampleDesc = _msSampleDescription;
+                var viewTex = MultiSampleCount > 1 ? GetMSTexture() : GetTexture();
+                var viewDesc = new DepthStencilViewDescription()
+                {
+                    Format = SharpDXHelper.ToViewFormat(this),
+                    Dimension = MultiSampleCount > 1 ? DepthStencilViewDimension.Texture2DMultisampled : DepthStencilViewDimension.Texture2D
+                };
 
-            // Create a descriptor for the depth/stencil buffer.
-            // Allocate a 2-D surface as the depth/stencil buffer.
-            // Create a DepthStencil view on this surface to use on bind.
-            using (var depthBuffer = new SharpDX.Direct3D11.Texture2D(GraphicsDevice._d3dDevice, new Texture2DDescription
-            {
-                Format = SharpDXHelper.ToFormat(DepthStencilFormat),
-                ArraySize = 1,
-                MipLevels = 1,
-                Width = width,
-                Height = height,
-                SampleDescription = multisampleDesc,
-                BindFlags = BindFlags.DepthStencil,
-            }))
-            {
-                // Create the view for binding to the device.
-                _depthStencilView = new DepthStencilView(GraphicsDevice._d3dDevice, depthBuffer,
-                    new DepthStencilViewDescription()
-                    {
-                        Format = SharpDXHelper.ToFormat(DepthStencilFormat),
-                        Dimension = MultiSampleCount > 1 ? DepthStencilViewDimension.Texture2DMultisampled : DepthStencilViewDimension.Texture2D
-                    });
+                _depthStencilView = new DepthStencilView(GraphicsDevice._d3dDevice, viewTex, viewDesc);
             }
         }
 
@@ -142,7 +125,7 @@ namespace Microsoft.Xna.Framework.Graphics
                     0,
                     GetTexture(),
                     0,
-                    SharpDXHelper.ToFormat(_format));
+                    SharpDXHelper.ToResourceFormat(this));
             }
         }
 
@@ -151,7 +134,13 @@ namespace Microsoft.Xna.Framework.Graphics
             var desc = base.GetTexture2DDescription();
 
             if (MultiSampleCount == 0)
-                desc.BindFlags |= BindFlags.RenderTarget;
+            {
+                if (IsValidSurface)
+                    desc.BindFlags |= BindFlags.RenderTarget | BindFlags.UnorderedAccess;
+
+                if (IsValidDepthStencil)
+                    desc.BindFlags |= BindFlags.DepthStencil;
+            }
 
             if (Mipmap)
             {
@@ -180,9 +169,15 @@ namespace Microsoft.Xna.Framework.Graphics
         {
             var desc = base.GetTexture2DDescription();
 
-            desc.BindFlags |= BindFlags.RenderTarget;
+            if (IsValidSurface)
+                desc.BindFlags |= BindFlags.RenderTarget;
+
+            if(IsValidDepthStencil)
+                desc.BindFlags |= BindFlags.DepthStencil;
+
             // the multi sampled texture can never be bound directly
             desc.BindFlags &= ~BindFlags.ShaderResource;
+            desc.BindFlags &= ~BindFlags.UnorderedAccess;
             desc.SampleDescription = _msSampleDescription;
             // mip mapping is applied to the resolved texture, not the multisampled texture
             desc.MipLevels = 1;

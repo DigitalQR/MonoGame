@@ -30,28 +30,28 @@ namespace Microsoft.Xna.Framework.Graphics
             get { return _depth; }
         }
 
-		public Texture3D(GraphicsDevice graphicsDevice, int width, int height, int depth, bool mipMap, SurfaceFormat format)
+        public Texture3D(GraphicsDevice graphicsDevice, int width, int height, int depth, bool mipMap, SurfaceFormat format)
             : this(graphicsDevice, width, height, depth, mipMap, format, false)
-		{
-		}
+        {
+        }
 
-		protected Texture3D (GraphicsDevice graphicsDevice, int width, int height, int depth, bool mipMap, SurfaceFormat format, bool renderTarget)
-		{
-		    if (graphicsDevice == null)
-		        throw new ArgumentNullException("graphicsDevice", FrameworkResources.ResourceCreationWhenDeviceIsNull);
+        protected Texture3D(GraphicsDevice graphicsDevice, int width, int height, int depth, bool mipMap, SurfaceFormat format, bool renderTarget)
+        {
+            if (graphicsDevice == null)
+                throw new ArgumentNullException("graphicsDevice", FrameworkResources.ResourceCreationWhenDeviceIsNull);
             if (width <= 0)
-                throw new ArgumentOutOfRangeException("width","Texture width must be greater than zero");
+                throw new ArgumentOutOfRangeException("width", "Texture width must be greater than zero");
             if (height <= 0)
-                throw new ArgumentOutOfRangeException("height","Texture height must be greater than zero");
+                throw new ArgumentOutOfRangeException("height", "Texture height must be greater than zero");
             if (depth <= 0)
-                throw new ArgumentOutOfRangeException("depth","Texture depth must be greater than zero");
+                throw new ArgumentOutOfRangeException("depth", "Texture depth must be greater than zero");
 
-		    this.GraphicsDevice = graphicsDevice;
+            this.GraphicsDevice = graphicsDevice;
             this._width = width;
             this._height = height;
             this._depth = depth;
             this._levelCount = 1;
-		    this._format = format;
+            this._surfaceFormat = format;
 
             PlatformConstruct(graphicsDevice, width, height, depth, mipMap, format, renderTarget);
         }
@@ -146,7 +146,7 @@ namespace Microsoft.Xna.Framework.Graphics
             if (data == null)
                 throw new ArgumentNullException("data");
             var tSize = ReflectionHelpers.SizeOf<T>.Get();
-            var fSize = Format.GetSize();
+            var fSize = SurfaceFormat.GetSize();
             if (tSize > fSize || fSize % tSize != 0)
                 throw new ArgumentException("Type T is of an invalid size for the format of this texture.", "T");
             if (startIndex < 0 || startIndex >= data.Length)

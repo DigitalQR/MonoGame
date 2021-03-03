@@ -62,6 +62,19 @@ namespace Microsoft.Xna.Framework.Graphics
         }
 
         /// <summary>
+        /// Creates a new texture of a given size with a surface format and optional mipmaps 
+        /// </summary>
+        /// <param name="graphicsDevice"></param>
+        /// <param name="width"></param>
+        /// <param name="height"></param>
+        /// <param name="mipmap"></param>
+        /// <param name="format"></param>
+        public Texture2D(GraphicsDevice graphicsDevice, int width, int height, bool mipmap, DepthFormat format)
+            : this(graphicsDevice, width, height, mipmap, format, SurfaceType.Texture, false, 1)
+        {
+        }
+
+        /// <summary>
         /// Creates a new texture array of a given size with a surface format and optional mipmaps.
         /// Throws ArgumentException if the current GraphicsDevice can't work with texture arrays
         /// </summary>
@@ -74,7 +87,23 @@ namespace Microsoft.Xna.Framework.Graphics
         public Texture2D(GraphicsDevice graphicsDevice, int width, int height, bool mipmap, SurfaceFormat format, int arraySize)
             : this(graphicsDevice, width, height, mipmap, format, SurfaceType.Texture, false, arraySize)
         {
-            
+
+        }
+
+        /// <summary>
+        /// Creates a new texture array of a given size with a surface format and optional mipmaps.
+        /// Throws ArgumentException if the current GraphicsDevice can't work with texture arrays
+        /// </summary>
+        /// <param name="graphicsDevice"></param>
+        /// <param name="width"></param>
+        /// <param name="height"></param>
+        /// <param name="mipmap"></param>
+        /// <param name="format"></param>
+        /// <param name="arraySize"></param>
+        public Texture2D(GraphicsDevice graphicsDevice, int width, int height, bool mipmap, DepthFormat format, int arraySize)
+            : this(graphicsDevice, width, height, mipmap, format, SurfaceType.Texture, false, arraySize)
+        {
+
         }
 
         /// <summary>
@@ -90,15 +119,29 @@ namespace Microsoft.Xna.Framework.Graphics
             : this(graphicsDevice, width, height, mipmap, format, type, false, 1)
         {
         }
-        
+
+        /// <summary>
+        ///  Creates a new texture of a given size with a surface format and optional mipmaps.
+        /// </summary>
+        /// <param name="graphicsDevice"></param>
+        /// <param name="width"></param>
+        /// <param name="height"></param>
+        /// <param name="mipmap"></param>
+        /// <param name="format"></param>
+        /// <param name="type"></param>
+        internal Texture2D(GraphicsDevice graphicsDevice, int width, int height, bool mipmap, DepthFormat format, SurfaceType type)
+            : this(graphicsDevice, width, height, mipmap, format, type, false, 1)
+        {
+        }
+
         protected Texture2D(GraphicsDevice graphicsDevice, int width, int height, bool mipmap, SurfaceFormat format, SurfaceType type, bool shared, int arraySize)
-		{
+        {
             if (graphicsDevice == null)
                 throw new ArgumentNullException("graphicsDevice", FrameworkResources.ResourceCreationWhenDeviceIsNull);
             if (width <= 0)
-                throw new ArgumentOutOfRangeException("width","Texture width must be greater than zero");
+                throw new ArgumentOutOfRangeException("width", "Texture width must be greater than zero");
             if (height <= 0)
-                throw new ArgumentOutOfRangeException("height","Texture height must be greater than zero");
+                throw new ArgumentOutOfRangeException("height", "Texture height must be greater than zero");
             if (arraySize > 1 && !graphicsDevice.GraphicsCapabilities.SupportsTextureArrays)
                 throw new ArgumentException("Texture arrays are not supported on this graphics device", "arraySize");
 
@@ -108,13 +151,41 @@ namespace Microsoft.Xna.Framework.Graphics
             this.TexelWidth = 1f / (float)width;
             this.TexelHeight = 1f / (float)height;
 
-            this._format = format;
+            this._surfaceFormat = format;
             this._levelCount = mipmap ? CalculateMipLevels(width, height) : 1;
             this.ArraySize = arraySize;
 
             // Texture will be assigned by the swap chain.
-		    if (type == SurfaceType.SwapChainRenderTarget)
-		        return;
+            if (type == SurfaceType.SwapChainRenderTarget)
+                return;
+
+            PlatformConstruct(width, height, mipmap, format, type, shared);
+        }
+
+        protected Texture2D(GraphicsDevice graphicsDevice, int width, int height, bool mipmap, DepthFormat format, SurfaceType type, bool shared, int arraySize)
+        {
+            if (graphicsDevice == null)
+                throw new ArgumentNullException("graphicsDevice", FrameworkResources.ResourceCreationWhenDeviceIsNull);
+            if (width <= 0)
+                throw new ArgumentOutOfRangeException("width", "Texture width must be greater than zero");
+            if (height <= 0)
+                throw new ArgumentOutOfRangeException("height", "Texture height must be greater than zero");
+            if (arraySize > 1 && !graphicsDevice.GraphicsCapabilities.SupportsTextureArrays)
+                throw new ArgumentException("Texture arrays are not supported on this graphics device", "arraySize");
+
+            this.GraphicsDevice = graphicsDevice;
+            this.width = width;
+            this.height = height;
+            this.TexelWidth = 1f / (float)width;
+            this.TexelHeight = 1f / (float)height;
+
+            this._depthFormat = format;
+            this._levelCount = mipmap ? CalculateMipLevels(width, height) : 1;
+            this.ArraySize = arraySize;
+
+            // Texture will be assigned by the swap chain.
+            if (type == SurfaceType.SwapChainRenderTarget)
+                return;
 
             PlatformConstruct(width, height, mipmap, format, type, shared);
         }
@@ -373,7 +444,7 @@ namespace Microsoft.Xna.Framework.Graphics
             if (data == null)
                 throw new ArgumentNullException("data");
             var tSize = ReflectionHelpers.SizeOf<T>.Get();
-            var fSize = Format.GetSize();
+            var fSize = SurfaceFormat.GetSize();
             if (tSize > fSize || fSize % tSize != 0)
                 throw new ArgumentException("Type T is of an invalid size for the format of this texture.", "T");
             if (startIndex < 0 || startIndex >= data.Length)
@@ -382,10 +453,10 @@ namespace Microsoft.Xna.Framework.Graphics
                 throw new ArgumentException("The data array is too small.");
 
             int dataByteSize;
-            if (Format.IsCompressedFormat())
+            if (SurfaceFormat.IsCompressedFormat())
             {
                 int blockWidth, blockHeight;
-                Format.GetBlockSize(out blockWidth, out blockHeight);
+                SurfaceFormat.GetBlockSize(out blockWidth, out blockHeight);
                 int blockWidthMinusOne = blockWidth - 1;
                 int blockHeightMinusOne = blockHeight - 1;
                 // round x and y down to next multiple of block size; width and height up to next multiple of block size
@@ -401,11 +472,11 @@ namespace Microsoft.Xna.Framework.Graphics
 #else
                     roundedWidth, roundedHeight);
 #endif
-                if (Format == SurfaceFormat.RgbPvrtc2Bpp || Format == SurfaceFormat.RgbaPvrtc2Bpp)
+                if (SurfaceFormat == SurfaceFormat.RgbPvrtc2Bpp || SurfaceFormat == SurfaceFormat.RgbaPvrtc2Bpp)
                 {
                     dataByteSize = (Math.Max(checkedRect.Width, 16) * Math.Max(checkedRect.Height, 8) * 2 + 7) / 8;
                 }
-                else if (Format == SurfaceFormat.RgbPvrtc4Bpp || Format == SurfaceFormat.RgbaPvrtc4Bpp)
+                else if (SurfaceFormat == SurfaceFormat.RgbPvrtc4Bpp || SurfaceFormat == SurfaceFormat.RgbaPvrtc4Bpp)
                 {
                     dataByteSize = (Math.Max(checkedRect.Width, 8) * Math.Max(checkedRect.Height, 8) * 4 + 7) / 8;
                 }
@@ -429,7 +500,7 @@ namespace Microsoft.Xna.Framework.Graphics
             int colorDataLength = Width * Height;
             var colorData = new Color[colorDataLength];
 
-            switch (Format)
+            switch (SurfaceFormat)
             {
                 case SurfaceFormat.Single:
                     var floatData = new float[colorDataLength];

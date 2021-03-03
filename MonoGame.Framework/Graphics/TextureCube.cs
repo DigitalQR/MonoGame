@@ -38,7 +38,7 @@ namespace Microsoft.Xna.Framework.Graphics
 
             this.GraphicsDevice = graphicsDevice;
 			this.size = size;
-            this._format = format;
+            this._surfaceFormat = format;
             this._levelCount = mipMap ? CalculateMipLevels(size) : 1;
 
             PlatformConstruct(graphicsDevice, size, mipMap, format, renderTarget);
@@ -100,7 +100,7 @@ namespace Microsoft.Xna.Framework.Graphics
             if (data == null)
                 throw new ArgumentNullException("data");
             var tSize = ReflectionHelpers.SizeOf<T>.Get();
-            var fSize = Format.GetSize();
+            var fSize = SurfaceFormat.GetSize();
             if (tSize > fSize || fSize % tSize != 0)
                 throw new ArgumentException("Type T is of an invalid size for the format of this texture.", "T");
             if (startIndex < 0 || startIndex >= data.Length)
@@ -109,7 +109,7 @@ namespace Microsoft.Xna.Framework.Graphics
                 throw new ArgumentException("The data array is too small.");
 
             int dataByteSize;
-            if (Format.IsCompressedFormat())
+            if (SurfaceFormat.IsCompressedFormat())
             {
                 // round x and y down to next multiple of four; width and height up to next multiple of four
                 var roundedWidth = (checkedRect.Width + 3) & ~0x3;

@@ -12,12 +12,6 @@ namespace Microsoft.Xna.Framework.Graphics
     public partial class RenderTargetCube : TextureCube, IRenderTarget
     {
         /// <summary>
-        /// Gets the depth-stencil buffer format of this render target.
-        /// </summary>
-        /// <value>The format of the depth-stencil buffer.</value>
-        public DepthFormat DepthStencilFormat { get; private set; }
-
-        /// <summary>
         /// Gets the number of multisample locations.
         /// </summary>
         /// <value>The number of multisample locations.</value>
@@ -50,10 +44,9 @@ namespace Microsoft.Xna.Framework.Graphics
         /// <param name="graphicsDevice">The graphics device.</param>
         /// <param name="size">The width and height of a texture cube face in pixels.</param>
         /// <param name="mipMap"><see langword="true"/> to generate a full mipmap chain; otherwise <see langword="false"/>.</param>
-        /// <param name="preferredFormat">The preferred format of the surface.</param>
-        /// <param name="preferredDepthFormat">The preferred format of the depth-stencil buffer.</param>
-        public RenderTargetCube(GraphicsDevice graphicsDevice, int size, bool mipMap, SurfaceFormat preferredFormat, DepthFormat preferredDepthFormat)
-            : this(graphicsDevice, size, mipMap, preferredFormat, preferredDepthFormat, 0, RenderTargetUsage.DiscardContents)
+        /// <param name="preferredFormat">The preferred format of the surface.</param>m>
+        public RenderTargetCube(GraphicsDevice graphicsDevice, int size, bool mipMap, SurfaceFormat preferredFormat)
+            : this(graphicsDevice, size, mipMap, preferredFormat, 0, RenderTargetUsage.DiscardContents)
         {            
         }
 
@@ -64,17 +57,15 @@ namespace Microsoft.Xna.Framework.Graphics
         /// <param name="size">The width and height of a texture cube face in pixels.</param>
         /// <param name="mipMap"><see langword="true"/> to generate a full mipmap chain; otherwise <see langword="false"/>.</param>
         /// <param name="preferredFormat">The preferred format of the surface.</param>
-        /// <param name="preferredDepthFormat">The preferred format of the depth-stencil buffer.</param>
         /// <param name="preferredMultiSampleCount">The preferred number of multisample locations.</param>
         /// <param name="usage">The usage mode of the render target.</param>
-        public RenderTargetCube(GraphicsDevice graphicsDevice, int size, bool mipMap, SurfaceFormat preferredFormat, DepthFormat preferredDepthFormat, int preferredMultiSampleCount, RenderTargetUsage usage)
+        public RenderTargetCube(GraphicsDevice graphicsDevice, int size, bool mipMap, SurfaceFormat preferredFormat, int preferredMultiSampleCount, RenderTargetUsage usage)
             : base(graphicsDevice, size, mipMap, QuerySelectedFormat(graphicsDevice, preferredFormat), true)
         {
-            DepthStencilFormat = preferredDepthFormat;
             MultiSampleCount = preferredMultiSampleCount;
             RenderTargetUsage = usage;
 
-            PlatformConstruct(graphicsDevice, mipMap, preferredDepthFormat, preferredMultiSampleCount, usage);
+            PlatformConstruct(graphicsDevice, mipMap, preferredMultiSampleCount, usage);
         }
         
         protected static SurfaceFormat QuerySelectedFormat(GraphicsDevice graphicsDevice, SurfaceFormat preferredFormat)

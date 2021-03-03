@@ -21,7 +21,7 @@ namespace Microsoft.Xna.Framework.Content
 		{
 			Texture2D texture = null;
 
-            var surfaceFormat = (SurfaceFormat)reader.ReadInt32();
+            var surfaceFormat = (SurfaceFormat)(reader.ReadInt32() + 1); // added support for none (This is dogedy, if start using tools, need to update this)
             int width = reader.ReadInt32();
             int height = reader.ReadInt32();
             int levelCount = reader.ReadInt32();

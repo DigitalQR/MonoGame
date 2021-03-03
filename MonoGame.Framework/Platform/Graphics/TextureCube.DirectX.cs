@@ -27,6 +27,49 @@ namespace Microsoft.Xna.Framework.Graphics
             GetTexture();
         }
 
+        internal override ShaderResourceView GetShaderResourceView()
+        {
+            if (_shaderResourceView == null)
+            {
+                var resource = GetTexture();
+                var desc = new ShaderResourceViewDescription
+                {
+                    Format = SharpDXHelper.ToViewFormat(this)
+                };
+
+                desc.Dimension = SharpDX.Direct3D.ShaderResourceViewDimension.TextureCube;
+                desc.TextureCube = new ShaderResourceViewDescription.TextureCubeResource
+                {
+                    MostDetailedMip = 0,
+                    MipLevels = _levelCount
+                };
+
+                _shaderResourceView = new ShaderResourceView(GraphicsDevice._d3dDevice, resource, desc);
+            }
+
+            return _shaderResourceView;
+        }
+
+        internal override UnorderedAccessView GetUnorderedResourceView()
+        {
+            if (_unorderedAccessView == null)
+            {
+                //var desc = new UnorderedAccessViewDescription
+                //{
+                //    Format = SharpDXHelper.ToViewFormat(this),
+                //};
+                //
+                //desc.Dimension = UnorderedAccessViewDimension.;
+                //desc.TextureCube = new UnorderedAccessViewDescription.TextureCubeResource
+                //{
+                //};
+                //
+                //_unorderedAccessView = new UnorderedAccessView(GraphicsDevice._d3dDevice, GetTexture(), desc);
+            }
+
+            return _unorderedAccessView;
+        }
+
         internal override SharpDX.Direct3D11.Resource CreateTexture()
         {
             var description = new Texture2DDescription
@@ -35,7 +78,7 @@ namespace Microsoft.Xna.Framework.Graphics
                 Height = size,
                 MipLevels = _levelCount,
                 ArraySize = 6, // A texture cube is a 2D texture array with 6 textures.
-                Format = SharpDXHelper.ToFormat(_format),
+                Format = SharpDXHelper.ToResourceFormat(this),
                 BindFlags = BindFlags.ShaderResource,
                 CpuAccessFlags = CpuAccessFlags.None,
                 SampleDescription = { Count = 1, Quality = 0 },
@@ -45,7 +88,15 @@ namespace Microsoft.Xna.Framework.Graphics
 
             if (_renderTarget)
             {
-                description.BindFlags |= BindFlags.RenderTarget;
+                if(IsValidSurface)
+                    description.BindFlags |= BindFlags.RenderTarget;
+                else
+                {
+                    description.BindFlags |= BindFlags.DepthStencil;
+                    description.BindFlags &= ~BindFlags.ShaderResource;
+                    description.BindFlags &= ~BindFlags.UnorderedAccess;
+                }
+
                 if (_mipMap)
                     description.OptionFlags |= ResourceOptionFlags.GenerateMipMaps;
             }
@@ -60,7 +111,7 @@ namespace Microsoft.Xna.Framework.Graphics
             // TODO: Like in Texture2D, we should probably be pooling these staging resources
             // and not creating a new one each time.
             //
-            var min = _format.IsCompressedFormat() ? 4 : 1;
+            var min = IsFormatCompressed() ? 4 : 1;
             var levelSize = Math.Max(size >> level, min);
 
             var desc = new Texture2DDescription
@@ -69,7 +120,7 @@ namespace Microsoft.Xna.Framework.Graphics
                 Height = levelSize,
                 MipLevels = 1,
                 ArraySize = 1,
-                Format = SharpDXHelper.ToFormat(_format),
+                Format = SharpDXHelper.ToResourceFormat(this),
                 SampleDescription = new SampleDescription(1, 0),
                 BindFlags = BindFlags.None,
                 CpuAccessFlags = CpuAccessFlags.Read,
@@ -95,8 +146,8 @@ namespace Microsoft.Xna.Framework.Graphics
                     {
                         var databox = d3dContext.MapSubresource(stagingTex, 0, MapMode.Read, MapFlags.None, out stream);
 
-                        var elementSize = _format.GetSize();
-                        if (_format.IsCompressedFormat())
+                        var elementSize = GetFormatSize();
+                        if (IsFormatCompressed())
                         {
                             // for 4x4 block compression formats an element is one block, so elementsInRow
                             // and number of rows are 1/4 of number of pixels in width and height of the rectangle

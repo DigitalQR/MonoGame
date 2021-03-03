@@ -725,6 +725,7 @@ namespace Microsoft.Xna.Framework.Graphics
 
             // Clear the current render targets.
             _currentDepthStencilView = null;
+            _currentDepthTargetBinding = new RenderTargetBinding();
             Array.Clear(_currentRenderTargets, 0, _currentRenderTargets.Length);
             Array.Clear(_currentRenderTargetBindings, 0, _currentRenderTargetBindings.Length);
             _currentRenderTargetCount = 0;
@@ -835,7 +836,7 @@ namespace Microsoft.Xna.Framework.Graphics
             // Create the depth buffer if we need it.
             if (PresentationParameters.DepthStencilFormat != DepthFormat.None)
             {
-                var depthFormat = SharpDXHelper.ToFormat(PresentationParameters.DepthStencilFormat);
+                var depthFormat = SharpDXHelper.ToViewFormat(PresentationParameters.DepthStencilFormat);
 
                 // Allocate a 2-D surface as the depth/stencil buffer.
                 using (var depthBuffer = new SharpDX.Direct3D11.Texture2D(_d3dDevice, new SharpDX.Direct3D11.Texture2DDescription()
@@ -897,6 +898,7 @@ namespace Microsoft.Xna.Framework.Graphics
         {
             CreateSizeDependentResources();
             ApplyRenderTargets(null);
+            ApplyDepthStencilTarget(new RenderTargetBinding());
         }
 
 #endif // WINDOWS
@@ -1161,11 +1163,27 @@ namespace Microsoft.Xna.Framework.Graphics
             }
         }
 
+        internal void PlatformResolveDepthTarget()
+        {
+            var renderTargetBinding = _currentDepthTargetBinding;
+
+            // Resolve MSAA render targets
+            var renderTarget = renderTargetBinding.RenderTarget as RenderTarget2D;
+            if (renderTarget != null && renderTarget.MultiSampleCount > 1)
+                renderTarget.ResolveSubresource();
+
+            // Generate mipmaps.
+            if (renderTargetBinding.RenderTarget != null && renderTargetBinding.RenderTarget.LevelCount > 1)
+            {
+                lock (_d3dContext)
+                    _d3dContext.GenerateMips(renderTargetBinding.RenderTarget.GetShaderResourceView());
+            }
+        }
+
         private IRenderTarget PlatformApplyRenderTargets()
         {
             // Clear the current render targets.
             Array.Clear(_currentRenderTargets, 0, _currentRenderTargets.Length);
-            _currentDepthStencilView = null;
 
             // Make sure none of the new targets are bound
             // to the device as a texture resource.
@@ -1182,9 +1200,30 @@ namespace Microsoft.Xna.Framework.Graphics
                 _currentRenderTargets[i] = target.GetRenderTargetView(binding.ArraySlice);
             }
 
-            // Use the depth from the first target.
-            var renderTarget = (IRenderTarget)_currentRenderTargetBindings[0].RenderTarget;
-            _currentDepthStencilView = renderTarget.GetDepthStencilView();
+            // Set the targets.
+            lock (_d3dContext)
+                _d3dContext.OutputMerger.SetTargets(_currentDepthStencilView, _currentRenderTargets);
+
+            return (IRenderTarget)_currentRenderTargetBindings[0].RenderTarget;
+        }
+
+        private IRenderTarget PlatformApplyDepthStencilTarget()
+        {
+            // Clear the current render targets.
+            _currentDepthStencilView = null;
+
+            // Make sure none of the new targets are bound
+            // to the device as a texture resource.
+            lock (_d3dContext)
+            {
+                var bindings = new RenderTargetBinding[] { _currentDepthTargetBinding };
+                Textures.ClearTargets(this, bindings);
+                ComputeRWTextures.ClearTargets(this, bindings);
+            }
+
+            var renderTarget = (IRenderTarget)_currentDepthTargetBinding.RenderTarget;
+            if (renderTarget != null)
+                _currentDepthStencilView = renderTarget.GetDepthStencilView();
 
             // Set the targets.
             lock (_d3dContext)

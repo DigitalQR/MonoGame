@@ -10,7 +10,8 @@ namespace Microsoft.Xna.Framework.Graphics
 {
 	public abstract partial class Texture : GraphicsResource
 	{
-		internal SurfaceFormat _format;
+		internal SurfaceFormat _surfaceFormat;
+        internal DepthFormat _depthFormat;
 		internal int _levelCount;
 
         private readonly int _sortingKey = Interlocked.Increment(ref _lastSortingKey);
@@ -29,15 +30,46 @@ namespace Microsoft.Xna.Framework.Graphics
             get { return _sortingKey; }
         }
 
-		public SurfaceFormat Format
+		public SurfaceFormat SurfaceFormat
 		{
-			get { return _format; }
+			get { return _surfaceFormat; }
 		}
-		
-		public int LevelCount
+
+        public DepthFormat DepthFormat
+        {
+            get { return _depthFormat; }
+        }
+
+        public bool IsValidSurface
+        {
+            get { return _surfaceFormat != SurfaceFormat.None; }
+        }
+
+        public bool IsValidDepthStencil
+        {
+            get { return _depthFormat != DepthFormat.None; }
+        }
+
+        public int LevelCount
 		{
 			get { return _levelCount; }
 		}
+
+        public int GetFormatSize()
+        {
+            if (IsValidSurface)
+                return _surfaceFormat.GetSize();
+            else
+                return _depthFormat.GetSize();
+        }
+
+        public bool IsFormatCompressed()
+        {
+            if (IsValidSurface)
+                return _surfaceFormat.IsCompressedFormat();
+            else
+                return _depthFormat.IsCompressedFormat();
+        }
 
         internal static int CalculateMipLevels(int width, int height = 0, int depth = 0)
         {
@@ -90,10 +122,11 @@ namespace Microsoft.Xna.Framework.Graphics
         internal int GetPitch(int width)
         {
             Debug.Assert(width > 0, "The width is negative!");
+            Debug.Assert(IsValidSurface);
 
             int pitch;
 
-            switch (_format)
+            switch (_surfaceFormat)
             {
                 case SurfaceFormat.Dxt1:
                 case SurfaceFormat.Dxt1SRgb:
@@ -111,11 +144,11 @@ namespace Microsoft.Xna.Framework.Graphics
                 case SurfaceFormat.Dxt5SRgb:
                 case SurfaceFormat.RgbPvrtc4Bpp:
                 case SurfaceFormat.RgbaPvrtc4Bpp:                    
-                    pitch = ((width + 3) / 4) * _format.GetSize();
+                    pitch = ((width + 3) / 4) * _surfaceFormat.GetSize();
                     break;
 
                 default:
-                    pitch = width * _format.GetSize();
+                    pitch = width * _surfaceFormat.GetSize();
                     break;
             };
 

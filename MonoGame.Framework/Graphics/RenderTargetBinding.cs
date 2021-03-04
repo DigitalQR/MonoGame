@@ -62,9 +62,7 @@ namespace Microsoft.Xna.Framework.Graphics
 
         public RenderTargetBinding(RenderTarget2D renderTarget)
         {
-            if (renderTarget == null)
-                throw new ArgumentNullException("renderTarget");
-
+            // Allowed null binding for depth stencil target
             _renderTarget = renderTarget;
             _arraySlice = (int)CubeMapFace.PositiveX;
         }
@@ -84,8 +82,7 @@ namespace Microsoft.Xna.Framework.Graphics
 
         public RenderTargetBinding(RenderTarget2D renderTarget, int arraySlice)
         {
-            if (renderTarget == null)
-                throw new ArgumentNullException("renderTarget");
+            // Allowed null binding for depth stencil target
             if (arraySlice < 0 || arraySlice >= renderTarget.ArraySize)
                 throw new ArgumentOutOfRangeException("arraySlice");
             if (!renderTarget.GraphicsDevice.GraphicsCapabilities.SupportsTextureArrays)

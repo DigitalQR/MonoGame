@@ -220,7 +220,7 @@ namespace Microsoft.Xna.Framework.Graphics
         {
             get
             {
-                return IsRenderTargetBound
+                return IsDepthTargetBound
                     ? _currentDepthTargetBinding.RenderTarget.DepthFormat
                     : PresentationParameters.DepthStencilFormat;
             }
@@ -917,6 +917,11 @@ namespace Microsoft.Xna.Framework.Graphics
             }
         }
 
+        public void SetDepthStencilTarget(RenderTarget2D renderTarget)
+        {
+            SetDepthStencilTarget(new RenderTargetBinding(renderTarget));
+        }
+
         public void SetDepthStencilTarget(RenderTargetBinding renderTarget)
         {
             if (_currentDepthTargetBinding.RenderTarget == renderTarget.RenderTarget && _currentDepthTargetBinding.ArraySlice == renderTarget.ArraySlice)
@@ -1196,9 +1201,6 @@ namespace Microsoft.Xna.Framework.Graphics
             if (_vertexShader == null)
                 throw new InvalidOperationException("Vertex shader must be set before calling DrawIndexedPrimitives.");
 
-            if (_vertexBuffers.Count == 0)
-                throw new InvalidOperationException("Vertex buffer must be set before calling DrawIndexedPrimitives.");
-
             if (_indexBuffer == null)
                 throw new InvalidOperationException("Index buffer must be set before calling DrawIndexedPrimitives.");
 
@@ -1279,9 +1281,6 @@ namespace Microsoft.Xna.Framework.Graphics
         {
             if (_vertexShader == null)
                 throw new InvalidOperationException("Vertex shader must be set before calling DrawPrimitives.");
-
-            if (_vertexBuffers.Count == 0)
-                throw new InvalidOperationException("Vertex buffer must be set before calling DrawPrimitives.");
 
             if (primitiveCount <= 0)
                 throw new ArgumentOutOfRangeException("primitiveCount");
@@ -1503,9 +1502,6 @@ namespace Microsoft.Xna.Framework.Graphics
         {
             if (_vertexShader == null)
                 throw new InvalidOperationException("Vertex shader must be set before calling DrawInstancedPrimitives.");
-
-            if (_vertexBuffers.Count == 0)
-                throw new InvalidOperationException("Vertex buffer must be set before calling DrawInstancedPrimitives.");
 
             if (_indexBuffer == null)
                 throw new InvalidOperationException("Index buffer must be set before calling DrawInstancedPrimitives.");

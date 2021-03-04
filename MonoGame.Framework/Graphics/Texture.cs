@@ -3,14 +3,40 @@
 // file 'LICENSE.txt', which is part of this source code package.
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
 
 namespace Microsoft.Xna.Framework.Graphics
 {
 	public abstract partial class Texture : GraphicsResource
-	{
-		internal SurfaceFormat _surfaceFormat;
+    {
+        private static Dictionary<SurfaceFormat, SurfaceFormat> s_ReaderFormatRemapping = new Dictionary<SurfaceFormat, SurfaceFormat>();
+
+        /// <summary>
+        /// Registers a specific format to format remapping to be used during texture reads 
+        /// </summary>
+        /// <param name="from"></param>
+        /// <param name="to"></param>
+        public static void RegisterReaderFormatRemapping(SurfaceFormat from, SurfaceFormat to)
+        {
+            s_ReaderFormatRemapping[from] = to;
+        }
+
+        /// <summary>
+        /// Remaps the given surface format based on previously registered mappings
+        /// </summary>
+        /// <param name="format"></param>
+        /// <returns></returns>
+        public static bool RemapReaderFormat(ref SurfaceFormat format)
+        {
+            if (s_ReaderFormatRemapping.TryGetValue(format, out format))
+                return true;
+
+            return false;
+        }
+
+        internal SurfaceFormat _surfaceFormat;
         internal DepthFormat _depthFormat;
 		internal int _levelCount;
 

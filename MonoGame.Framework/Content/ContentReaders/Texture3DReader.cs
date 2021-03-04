@@ -13,7 +13,9 @@ namespace Microsoft.Xna.Framework.Content
         {
             Texture3D texture = null;
 
-            SurfaceFormat format = (SurfaceFormat)reader.ReadInt32();
+            SurfaceFormat format = (SurfaceFormat)(reader.ReadInt32() + 1); // added support for none (This is dogedy, if start using tools, need to update this)
+            Texture.RemapReaderFormat(ref format);
+
             int width = reader.ReadInt32();
             int height = reader.ReadInt32();
             int depth = reader.ReadInt32();

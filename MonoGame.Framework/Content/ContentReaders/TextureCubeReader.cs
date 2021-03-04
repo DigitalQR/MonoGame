@@ -14,8 +14,10 @@ namespace Microsoft.Xna.Framework.Content
         {
             TextureCube textureCube = null;
 
-			SurfaceFormat surfaceFormat = (SurfaceFormat)reader.ReadInt32();
-			int size = reader.ReadInt32();
+			SurfaceFormat surfaceFormat = (SurfaceFormat)(reader.ReadInt32() + 1); // added support for none (This is dogedy, if start using tools, need to update this)
+            Texture.RemapReaderFormat(ref surfaceFormat);
+
+            int size = reader.ReadInt32();
 			int levels = reader.ReadInt32();
 
             if (existingInstance == null)

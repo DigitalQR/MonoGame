@@ -32,10 +32,20 @@ namespace Microsoft.Xna.Framework.Graphics
         internal Resource GetTexture()
         {
             if (_texture == null)
+            {
                 _texture = CreateTexture();
+                _texture.DebugName = Name;
+            }
 
             return _texture;
         }
+
+        internal override void OnResourceNameChange()
+        {
+            if(_texture != null)
+                _texture.DebugName = Name;
+        }
+
         internal abstract ShaderResourceView GetShaderResourceView();
 
         internal abstract UnorderedAccessView GetUnorderedResourceView();

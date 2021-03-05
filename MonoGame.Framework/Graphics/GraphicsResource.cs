@@ -53,6 +53,7 @@ namespace Microsoft.Xna.Framework.Graphics
         GraphicsDevice graphicsDevice;
 
         private WeakReference _selfReference;
+        private string _name;
 
         internal GraphicsResource()
         {
@@ -154,8 +155,19 @@ namespace Microsoft.Xna.Framework.Graphics
 				return disposed;
 			}
 		}
-		
-		public string Name { get; set; }
+
+		public string Name
+        {
+            get { return _name; }
+            set
+            {
+                if (_name != value)
+                {
+                    _name = value;
+                    OnResourceNameChange();
+                }
+            }
+        }
 		
 		public Object Tag { get; set; }
 
@@ -163,6 +175,8 @@ namespace Microsoft.Xna.Framework.Graphics
         {
             return string.IsNullOrEmpty(Name) ? base.ToString() : Name;
         }
+
+        internal virtual void OnResourceNameChange() { }
 	}
 }
 

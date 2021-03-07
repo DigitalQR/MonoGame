@@ -30,8 +30,12 @@ namespace Microsoft.Xna.Framework.Graphics
         /// <returns></returns>
         public static bool RemapReaderFormat(ref SurfaceFormat format)
         {
-            if (s_ReaderFormatRemapping.TryGetValue(format, out format))
+            SurfaceFormat overrideFormat;
+            if (s_ReaderFormatRemapping.TryGetValue(format, out overrideFormat))
+            {
+                format = overrideFormat;
                 return true;
+            }
 
             return false;
         }

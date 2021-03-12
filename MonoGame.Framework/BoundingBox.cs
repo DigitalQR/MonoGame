@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Runtime.Serialization;
 
 namespace Microsoft.Xna.Framework
@@ -451,6 +452,32 @@ namespace Microsoft.Xna.Framework
             result.Max.X = Math.Max(original.Max.X, additional.Max.X);
             result.Max.Y = Math.Max(original.Max.Y, additional.Max.Y);
             result.Max.Z = Math.Max(original.Max.Z, additional.Max.Z);
+        }
+
+        /// <summary>
+        ///   Create the <see cref="BoundingBox"/> by transforming a bounding box with a matrix.
+        /// </summary>
+        /// <param name="original">A <see cref="BoundingBox"/> to enclose.</param>
+        /// <param name="transform">A <see cref="Matrix"/> to apply.</param>
+        /// <returns>
+        ///   The <see cref="BoundingBox"/> transformed by <paramref name="transform"/>.
+        /// </returns>
+        public static BoundingBox Transform(BoundingBox original, Matrix transform)
+        {
+            return CreateFromPoints(original.GetCorners().Select((p) => Vector3.Transform(p, transform)));
+        }
+
+        /// <summary>
+        ///   Create the <see cref="BoundingBox"/> by transforming a bounding box with a matrix.
+        /// </summary>
+        /// <param name="original">A <see cref="BoundingBox"/> to enclose.</param>
+        /// <param name="transform">A <see cref="Matrix"/> to apply.</param>
+        /// <param name="result">
+        ///   The <see cref="BoundingBox"/> transformed by <paramref name="transform"/>.
+        /// </param>
+        public static void Transform(ref BoundingBox original, Matrix transform, out BoundingBox result)
+        {
+            result = CreateFromPoints(original.GetCorners().Select((p) => Vector3.Transform(p, transform)));
         }
 
         /// <summary>

@@ -523,6 +523,18 @@ namespace Microsoft.Xna.Framework
             result = value1.X * value2.X + value1.Y * value2.Y + value1.Z * value2.Z;
         }
 
+        public static float Angle(Vector3 value1, Vector3 value2)
+        {
+            float d = Dot(Vector3.Normalize(value1), Vector3.Normalize(value2));
+            return (float)Math.Acos(d);
+        }
+
+        public static void Angle(ref Vector3 value1, ref Vector3 value2, out float result)
+        {
+            float d = Dot(Vector3.Normalize(value1), Vector3.Normalize(value2));
+            result = (float)Math.Acos(d);
+        }
+
         /// <summary>
         /// Compares whether current instance is equal to specified <see cref="Object"/>.
         /// </summary>
